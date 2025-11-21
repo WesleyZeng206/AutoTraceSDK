@@ -19,7 +19,7 @@ export class EventBatcher {
   private batchSize: number;
   private batchInterval: number;
 
-  //dependency injection
+  //dependency injection (function provided by middleware)
   private sendFunction: (events: TelemetryEvent[]) => Promise<boolean>;
 
   private maxRetries: number = 3;
