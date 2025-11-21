@@ -29,7 +29,7 @@ export interface TelemetryEvent {
   /** Error message for humans to read */
   error_message?: string;
 
-  /** Additional flexible metadata, including user_id, custom fields, etc. */
+  /** Additional metadata, including user_id, custom fields, etc. */
   metadata?: Record<string, any>;
 }
 
