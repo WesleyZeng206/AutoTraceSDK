@@ -3,8 +3,7 @@
  * Entry point to the package is here.
  */
 
-//Remember to update this in the future 
-//export { createAIPMiddleware } from './middleware';
+export { createAIPMiddleware, createAIPErrorHandler } from './middleware';
 
 export type { TelemetryEvent, AIPConfig } from './types';
 

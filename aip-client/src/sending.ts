@@ -2,26 +2,13 @@
 import { TelemetryEvent, AIPConfig } from './types';
 
 // Possible circuit breaker states
-type CircuitState = 'CLOSED' | 'OPEN' | 'SEMI_OPEN';
+type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 // Default configuration values
 const TIMEOUT_MS = 5000;
 const MAX_RETRIES = 3;
 const CIRCUIT_THRESHOLD = 5;  
 const CIRCUIT_RESET_MS = 30000;  
-
-/**
- * Configuration for the sender module
- */
-interface SenderConfig {
-  ingestionUrl: string;
-  apiKey?: string;
-  debug?: boolean;
-  timeoutMs?: number;
-  maxRetries?: number;
-  circuitResetMs?: number;
-  circuitThreshold?: number;
-}
 
 /**
  * Result of a send operation
@@ -61,13 +48,13 @@ export function createSender(config: AIPConfig): (events: TelemetryEvent[]) => P
 
     if (!shouldAllowRequest(circuitState, circuitResetMs)) {
       if (config.debug) {
-        console.log('AIP: Circuit breaker is closed, rejecting the request');
+        console.log('AIP: Circuit breaker is open, rejecting the request');
       }
       return false;
     }
 
-    if (circuitState.state === 'CLOSED') {
-      circuitState = { ...circuitState, state: 'SEMI_OPEN', successCount: 0 };
+    if (circuitState.state === 'OPEN') {
+      circuitState = { ...circuitState, state: 'HALF_OPEN', successCount: 0 };
     }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -154,11 +141,11 @@ function shouldAllowRequest(
   state: CircuitBreakerState,
   resetMs: number = CIRCUIT_RESET_MS
 ): boolean {
-  if (state.state === 'OPEN') {
+  if (state.state === 'CLOSED') {
     return true;
   }
 
-  if (state.state === 'CLOSED') {
+  if (state.state === 'OPEN') {
     if (state.lastFailureTime === null) {
       return true;
     }
@@ -166,7 +153,7 @@ function shouldAllowRequest(
     return timeSinceFailure >= resetMs;
   }
 
-  if (state.state === 'SEMI_OPEN') {
+  if (state.state === 'HALF_OPEN') {
     return state.successCount < 3;
   }
 
@@ -179,11 +166,11 @@ function updateCircuitState(
   threshold: number = CIRCUIT_THRESHOLD
 ): CircuitBreakerState {
   if (success === true) {
-    if (state.state === 'OPEN') {
+    if (state.state === 'CLOSED') {
       return { ...state, failureCount: 0 };
     }
 
-    if (state.state === 'SEMI_OPEN') {
+    if (state.state === 'HALF_OPEN') {
       const newSuccessCount = state.successCount + 1;
       if (newSuccessCount >= 3) {
         return createInitialCircuitState();
@@ -194,11 +181,11 @@ function updateCircuitState(
     return state;
   }
 
-  if (state.state === 'OPEN') {
+  if (state.state === 'CLOSED') {
     const newFailureCount = state.failureCount + 1;
     if (newFailureCount >= threshold) {
       return {
-        state: 'CLOSED',
+        state: 'OPEN',
         failureCount: newFailureCount,
         lastFailureTime: Date.now(),
         successCount: 0,
@@ -207,9 +194,9 @@ function updateCircuitState(
     return { ...state, failureCount: newFailureCount, lastFailureTime: Date.now() };
   }
 
-  if (state.state === 'SEMI_OPEN') {
+  if (state.state === 'HALF_OPEN') {
     return {
-      state: 'CLOSED',
+      state: 'OPEN',
       failureCount: state.failureCount + 1,
       lastFailureTime: Date.now(),
       successCount: 0,
@@ -240,7 +227,7 @@ function sleep(ms: number): Promise<void> {
  */
 function createInitialCircuitState(): CircuitBreakerState {
   return {
-    state: 'OPEN',
+    state: 'CLOSED',
     failureCount: 0,
     lastFailureTime: null,
     successCount: 0
