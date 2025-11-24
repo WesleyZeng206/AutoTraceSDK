@@ -70,7 +70,7 @@ export function createAIPMiddleware(config: AIPConfig) {
  */
 export function createAIPErrorHandler(config: AIPConfig) {
   return function aipErrorHandler(err: Error, _req: Request, res: Response, next: NextFunction) {
-\    res.locals.errorType = err.name || 'Error';
+    res.locals.errorType = err.name || 'Error';
     res.locals.errorMessage = err.message || 'Something went wrong';
 
     if (config.debug) {
