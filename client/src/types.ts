@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+import type { TelemetryEvent } from '@autotrace/telemetry';
 export type { TelemetryEvent } from '@autotrace/telemetry';
 
 export interface RetryOptions {
@@ -16,6 +18,47 @@ export interface BatchRetryOptions {
   maxRetries?: number;
   /** Delay between retry attempts while flushing (in milliseconds) */
   delayMs?: number;
+}
+
+export interface RouteSamplingRule {
+  /** Route path or prefix */
+  pattern: string;
+  /** Sampling rate from [0-1] */
+  rate: number;
+}
+
+export interface StatusSamplingRule {
+  /** The specific HTTP status codes to match */
+  statuses?: number[];
+  /** Minimum HTTP status code */
+  min?: number;
+  /** Maximum HTTP status code */
+  max?: number;
+  /** Sampling rate between 0 and 1 */
+  rate: number;
+}
+
+export interface SamplingContext {
+  event: TelemetryEvent;
+  req: Request;
+}
+
+export interface SamplingOptions {
+  samplingRate?: number;
+  /** Always capture events that include errors */
+  alwaysSampleErrors?: boolean;
+  /** Capture events whose duration exceeds the threshold (ms) */
+  alwaysSampleSlow?: number;
+  /** Route-based sampling overrides */
+  routeRules?: RouteSamplingRule[];
+  /** Status-code based sampling overrides */
+  statusRules?: StatusSamplingRule[];
+  /** Custom callback to override sampling decisions */
+  customSampler?: (context: SamplingContext) => boolean | number | undefined;
+  /** Adjust sampling rate for different use cases  */
+  prioritySampler?: (context: SamplingContext) => number;
+  /** Salt for the consistent hashing function */
+  hashSalt?: string;
 }
 
 /**
@@ -48,4 +91,7 @@ export interface AutoTraceConfig {
 
   /** Customize retry behavior for batch flushing */
   batchRetryOptions?: BatchRetryOptions;
+
+  /** Control sampling and filtering of events */
+  sampling?: SamplingOptions;
 }

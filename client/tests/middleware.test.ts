@@ -219,7 +219,87 @@ describe('AutoTrace Middleware', () => {
       );
     });
 
-    it('should default error message to empty string when res.locals.errorMessage is missing', () => {
+    describe('sampling behavior', () => {
+      it('should drop events when the sampling rate is 0', () => {
+        config.sampling = { samplingRate: 0 };
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).not.toHaveBeenCalled();
+      });
+
+      it('should always sample errors when its configured', () => {
+        config.sampling = { samplingRate: 0 };
+        mockResponse.statusCode = 500;
+
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).toHaveBeenCalledTimes(1);
+      });
+
+      it('should sample slow requests above minimum threshold', () => {
+        jest.useFakeTimers();
+        config.sampling = { samplingRate: 0, alwaysSampleSlow: 100 };
+
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        jest.advanceTimersByTime(200);
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).toHaveBeenCalledTimes(1);
+        jest.useRealTimers();
+      });
+
+      it('should apply route sampling rules', () => {
+        config.sampling = {
+          samplingRate: 0,
+          routeRules: [{ pattern: '/test', rate: 1 }],
+        };
+
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).toHaveBeenCalledTimes(1);
+      });
+
+      it('should work with custom sampler returning boolean', () => {
+        config.sampling = {
+          samplingRate: 1,
+          customSampler: () => false,
+        };
+
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).not.toHaveBeenCalled();
+      });
+
+      it('should increase the sampling probability using priority sampler', () => {
+        config.sampling = {
+          samplingRate: 0.01,
+          prioritySampler: () => 200,
+        };
+
+        const middleware = createAutoTraceMiddleware(config);
+        middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        (mockResponse as any).emit('finish');
+
+        expect(mockBatcherAdd).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('should default error message to the empty string when res.locals.errorMessage is missing', () => {
       mockResponse.statusCode = 502;
       mockResponse.locals = {
         errorType: 'UpstreamError',

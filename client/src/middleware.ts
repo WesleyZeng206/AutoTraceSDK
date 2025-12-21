@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as generateUUID } from 'uuid';
-import { TelemetryEvent, AutoTraceConfig } from './types';
+import { TelemetryEvent, AutoTraceConfig, SamplingOptions, SamplingContext } from './types';
 import { createSender } from './sending';
 import { EventBatcher } from './batching';
 
@@ -58,7 +58,9 @@ export function createAutoTraceMiddleware(config: AutoTraceConfig) {
         event.error_message = '';
       }
 
-      batcher.add(event);
+      if (shouldSampleEvent(req, event, config.sampling)) {
+        batcher.add(event);
+      }
       errorCallbackMap.delete(res);
     };
 
@@ -101,4 +103,112 @@ export function createAutoTraceErrorHandler(config: AutoTraceConfig) {
 
     next(err);
   };
+}
+
+function shouldSampleEvent(req: Request, event: TelemetryEvent, sampling?: SamplingOptions): boolean {
+  if (!sampling) {
+    return true;
+  }
+
+  const context: SamplingContext = { req, event };
+
+  const alwaysSampleErrors = sampling.alwaysSampleErrors !== undefined ? sampling.alwaysSampleErrors : true;
+  if (alwaysSampleErrors && (event.status_code >= 400 || event.error_type)) {
+    return true;
+  }
+
+  if (typeof sampling.alwaysSampleSlow === 'number' && event.duration_ms >= sampling.alwaysSampleSlow) {
+    return true;
+  }
+
+  let rate = clampRate(sampling.samplingRate ?? 1);
+
+  if (Array.isArray(sampling.routeRules)) {
+    const matchedRule = sampling.routeRules.find(rule => matches(event.route, rule.pattern));
+
+    if (matchedRule) {
+      rate = clampRate(matchedRule.rate);
+    }
+  }
+
+  if (Array.isArray(sampling.statusRules)) {
+    const matchedStatusRule = sampling.statusRules.find(rule => {
+      let matches = false;
+      if (Array.isArray(rule.statuses) && rule.statuses.includes(event.status_code)) {
+        matches = true;
+      }
+      if (!matches && typeof rule.min === 'number' && typeof rule.max === 'number') {
+        matches = event.status_code >= rule.min && event.status_code <= rule.max;
+      }
+      return matches;
+    });
+
+    if (matchedStatusRule) {
+      rate = clampRate(matchedStatusRule.rate);
+    }
+  }
+
+  if (typeof sampling.prioritySampler === 'function') {
+    const pr = sampling.prioritySampler(context);
+    if (typeof pr === 'number' && 0 < pr) {
+      rate = clampRate(rate * pr);
+    }
+  }
+
+  if (typeof sampling.customSampler === 'function') {
+    const customDecision = sampling.customSampler(context);
+    if (typeof customDecision === 'boolean') {
+      return customDecision;
+    }
+    if (typeof customDecision === 'number') {
+      rate = clampRate(customDecision);
+    }
+  }
+
+  if (rate >= 1) {
+    return true;
+  }
+  if (rate <= 0) {
+    return false;
+  }
+
+  const hash = getProbability(`${event.request_id}${sampling.hashSalt || ''}`);
+  return hash < rate;
+}
+
+function matches(route: string | undefined, pattern: string): boolean {
+  if (!route) {
+    return false;
+  }
+
+  if (pattern.includes('*')) {
+    const escaped = pattern.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+    const regex = new RegExp(`^${escaped}$`);
+    return regex.test(route);
+  }
+
+  return route === pattern;
+}
+
+function clampRate(value: number): number {
+  if (Number.isNaN(value)) {
+    return 0;
+  }
+  if (value < 0) {
+    return 0;
+  }
+  if (value > 1) {
+    return 1;
+  }
+  return value;
+}
+
+function getProbability(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const chr = input.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0;
+  }
+  return (hash >>> 0) / 0xffffffff;
 }
