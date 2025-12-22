@@ -1,8 +1,8 @@
-import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import type { TelemetryEvent } from '@autotrace/telemetry';
 import { validateEvent } from '../services/validator';
 import { storageService } from '../services/storage';
+import { verifyKey } from '../utils/apiKey';
 
 export const telemetryRouter = Router();
 
@@ -11,24 +11,15 @@ telemetryRouter.post('/', async (req: Request, res: Response) => {
     const { events } = req.body;
 
     if (!Array.isArray(events) || events.length === 0) {
-      return res.status(400).json({
-        error: 'Invalid request',
-        message: 'Body must include an "events" array with at least one entry'
-      });
+      return res.status(400).json({ error: 'Invalid request', message: 'Body must include an "events" array with at least one entry' });
     }
 
     if (events.length > 500) {
-      return res.status(400).json({
-        error: 'Batch too large',
-        message: 'Send at most 500 events at a time'
-      });
+      return res.status(400).json({ error: 'Batch too large', message: 'Send at most 500 events at a time' });
     }
 
-    if (!isAuthorized(req.headers['x-api-key'])) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Invalid or missing API key'
-      });
+    if (!verifyKey(req.headers['x-api-key'])) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing API key' });
     }
 
     const rejected: Array<{ index: number; errors: string[] }> = [];
@@ -44,26 +35,15 @@ telemetryRouter.post('/', async (req: Request, res: Response) => {
     });
 
     if (rejected.length > 0) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        message: `${rejected.length} events failed validation`,
-        validationErrors: rejected
-      });
+      return res.status(400).json({ error: 'Validation failed', message: `${rejected.length} events failed validation`, validationErrors: rejected });
     }
 
     await storageService.insertBatch(accepted);
 
-    res.status(202).json({
-      message: 'Events accepted',
-      count: accepted.length,
-      timestamp: new Date().toISOString()
-    });
+    res.status(202).json({ message: 'Events accepted', count: accepted.length, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error('Error processing telemetry:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to process telemetry events'
-    });
+    res.status(500).json({ error: 'Internal server error', message: 'Failed to process telemetry events' });
   }
 });
 
@@ -78,10 +58,7 @@ telemetryRouter.get('/', async (req: Request, res: Response) => {
     res.status(200).json({ events, count: events.length, filters: parsed });
   } catch (error) {
     console.error('Error querying telemetry:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to query telemetry events'
-    });
+    res.status(500).json({ error: 'Internal server error', message: 'Failed to query telemetry events' });
   }
 });
 
@@ -122,30 +99,5 @@ function parseFilters(query: Request['query']): ParsedFilters | { error: { error
     return { error: { error: 'Invalid query parameter', message: 'offset must be a non-negative number' } };
   }
 
-  return {
-    service: service as string,
-    route: route as string,
-    startTime: parsedStart,
-    endTime: parsedEnd,
-    limit: parsedLimit,
-    offset: parsedOffset
-  };
-}
-
-function isAuthorized(headerValue: string | string[] | undefined): boolean {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return true;
-
-  const provided = Array.isArray(headerValue) ? headerValue[0] : headerValue;
-  if (!provided) return false;
-
-  const expectedBuffer = Buffer.from(apiKey);
-  const providedBuffer = Buffer.from(provided);
-
-  if (expectedBuffer.length !== providedBuffer.length) {
-    crypto.timingSafeEqual(expectedBuffer, expectedBuffer);
-    return false;
-  }
-
-  return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+  return { service: service as string, route: route as string, startTime: parsedStart, endTime: parsedEnd, limit: parsedLimit, offset: parsedOffset };
 }

@@ -68,12 +68,7 @@ export class StorageService {
     const values: Array<string | number | null> = [];
     const rows = events.map((event, idx) => {
       const baseIndex = idx * columnsPerRow;
-      values.push(
-        event.request_id,
-        event.service_name,
-        event.route,
-        event.method,
-        event.status_code,
+      values.push( event.request_id, event.service_name, event.route, event.method, event.status_code,
         event.duration_ms,
         event.timestamp,
         event.error_type || null,
