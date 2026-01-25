@@ -264,33 +264,68 @@ export class TeamService {
     }
   }
 
-  async updateMemberRole(
-    teamId: string,
-    userId: string,
-    role: 'admin' | 'member'
-  ): Promise<void> {
-    const result = await this.pool.query(
-      `UPDATE team_members
-       SET role = $1
-       WHERE team_id = $2 AND user_id = $3 AND role != 'owner'`,
-      [role, teamId, userId]
+  async updateMemberRole( teamId: string, userId: string, role: 'admin' | 'member', actorId: string): Promise<void> {
+    const actor = await this.pool.query(
+      'SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, actorId]
     );
 
-    if (result.rowCount === 0) {
-      throw new Error('Cannot update role: member not found or is owner');
-    }
-  }
-
-  async removeMember(teamId: string, userId: string): Promise<void> {
-    const result = await this.pool.query(
-      `DELETE FROM team_members
-       WHERE team_id = $1 AND user_id = $2 AND role != 'owner'`,
+    const target = await this.pool.query(
+      'SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2',
       [teamId, userId]
     );
 
-    if (result.rowCount === 0) {
-      throw new Error('Cannot remove member: not found or is owner');
+    if (actor.rows.length === 0 || target.rows.length === 0) {
+      throw new Error('Cannot update role: member not found');
     }
+
+    const aRole = actor.rows[0].role;
+    const tRole = target.rows[0].role;
+
+    if (tRole === 'owner') {
+      throw new Error('Cannot update role: cannot modify owner');
+    }
+
+    if (aRole === 'admin' && tRole === 'admin') {
+      throw new Error('Cannot update role: admins cannot modify other admins');
+    }
+
+    await this.pool.query(
+      `UPDATE team_members SET role = $1 WHERE team_id = $2 AND user_id = $3`,
+      [role, teamId, userId]
+    );
+  }
+
+  async removeMember(teamId: string, userId: string, actorId: string): Promise<void> {
+    const actor = await this.pool.query(
+      'SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, actorId]
+    );
+
+    const target = await this.pool.query(
+      'SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, userId]
+    );
+
+    if (actor.rows.length === 0 || target.rows.length === 0) {
+      throw new Error('Cannot remove member: not found');
+    }
+
+    const aRole = actor.rows[0].role;
+    const tRole = target.rows[0].role;
+
+    if (tRole === 'owner') {
+      throw new Error('Cannot remove member: cannot remove owner');
+    }
+
+    if (aRole === 'admin' && tRole === 'admin') {
+      throw new Error('Cannot remove member: admins cannot remove other admins');
+    }
+
+    await this.pool.query(
+      `DELETE FROM team_members WHERE team_id = $1 AND user_id = $2`,
+      [teamId, userId]
+    );
   }
 
   async getTeamMembers(teamId: string): Promise<

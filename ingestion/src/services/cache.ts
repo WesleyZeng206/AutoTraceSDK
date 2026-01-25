@@ -15,7 +15,7 @@ export class CacheService {
       return;
     }
 
-    this.enabled = process.env.REDIS_ENABLED === 'true';
+    this.enabled = enabled ?? process.env.REDIS_ENABLED === 'true';
     if (this.enabled) {
       this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
         retryStrategy: times => Math.min(times * 50, 2000),

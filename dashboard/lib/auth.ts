@@ -23,7 +23,6 @@ export interface AuthResponse {
 
 export interface LoginResponse {
   message: string;
-  token: string;
   user: AuthResponse;
 }
 

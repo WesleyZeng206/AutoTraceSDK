@@ -197,13 +197,13 @@ export function createTeamsRouter(pool: Pool): Router {
           });
         }
 
-        await teamService.updateMemberRole(teamId, userId, role);
+        await teamService.updateMemberRole(teamId, userId, role, req.user!.id);
 
         res.status(200).json({ message: 'Member role updated successfully' });
       } catch (error: any) {
         console.error('Update member role error:', error);
 
-        if (error.message === 'Cannot update role: member not found or is owner') {
+        if (error.message.startsWith('Cannot update role:')) {
           return res.status(400).json({ error: error.message });
         }
 
@@ -220,14 +220,14 @@ export function createTeamsRouter(pool: Pool): Router {
       try {
         const { teamId, userId } = req.params;
 
-        await teamService.removeMember(teamId, userId);
+        await teamService.removeMember(teamId, userId, req.user!.id);
 
         res.status(200).json({ message: 'Member removed successfully' });
       } catch (error: any) {
         console.error('Remove member error:', error);
 
-        if (error.message === 'Cannot remove member: not found or is owner') {
-          return res.status(400).json({ error: 'Cannot remove team owner' });
+        if (error.message.startsWith('Cannot remove member:')) {
+          return res.status(400).json({ error: error.message });
         }
 
         res.status(500).json({ error: 'Failed to remove member' });

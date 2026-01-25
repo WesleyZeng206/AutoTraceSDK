@@ -2,13 +2,14 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { AuthService } from '../services/auth';
 import { requireAuth } from '../middleware/auth';
+import { registrationRateLimiter } from '../middleware/security';
 
 export function createAuthRouter(pool: Pool): Router {
   const router = Router();
   const authService = new AuthService(pool);
 
 
-  router.post('/register', async (req: Request, res: Response) => {
+  router.post('/register', registrationRateLimiter, async (req: Request, res: Response) => {
     try {
       const { email, username, password, teamName } = req.body;
 
@@ -33,10 +34,20 @@ export function createAuthRouter(pool: Pool): Router {
         });
       }
 
-      // Password validation 
       if (password.length < 8) {
         return res.status(400).json({
           error: 'Password must be at least 8 characters long',
+        });
+      }
+
+      const hasUpper = /[A-Z]/.test(password);
+      const hasLower = /[a-z]/.test(password);
+      const hasNum = /[0-9]/.test(password);
+      const hasSpec = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+      if (!hasUpper || !hasLower || !hasNum || !hasSpec) {
+        return res.status(400).json({
+          error: 'Password must contain uppercase, lowercase, number, and special character',
         });
       }
 
@@ -86,7 +97,6 @@ export function createAuthRouter(pool: Pool): Router {
 
       res.status(200).json({
         message: 'Login successful',
-        token,
         user,
       });
     } catch (error: any) {
@@ -106,8 +116,7 @@ export function createAuthRouter(pool: Pool): Router {
       const token =
         req.cookies?.session_token ||
         (req.headers.authorization?.startsWith('Bearer ')
-          ? req.headers.authorization.substring(7)
-          : null);
+          ? req.headers.authorization.substring(7) : null);
 
       if (token) {
         await authService.logout(token);

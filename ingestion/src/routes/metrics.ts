@@ -163,27 +163,33 @@ metricsRouter.get('/', requireAuth(storageService.pool), async (req: Request, re
       return res.status(200).json({ metrics: result.rows });
     }
 
-    let bucketExpression = `date_trunc('hour', timestamp) + (FLOOR(EXTRACT(MINUTE FROM timestamp) / ${intervalMinutes})::int * INTERVAL '${intervalMinutes} minutes')`;
-    let timeSeriesStart = `date_trunc('hour', $2::timestamptz) + (FLOOR(EXTRACT(MINUTE FROM $2::timestamptz) / ${intervalMinutes})::int * INTERVAL '${intervalMinutes} minutes')`;
-    let timeSeriesEnd = `date_trunc('hour', $3::timestamptz) + (FLOOR(EXTRACT(MINUTE FROM $3::timestamptz) / ${intervalMinutes})::int * INTERVAL '${intervalMinutes} minutes')`;
+    const m = [15, 30, 60].includes(intervalMinutes) ? intervalMinutes : 60;
 
-    if (intervalMinutes >= 60) {
-      bucketExpression = `date_trunc('hour', timestamp)`;
-      timeSeriesStart = `date_trunc('hour', $2::timestamptz)`;
-      timeSeriesEnd = `date_trunc('hour', $3::timestamptz)`;
+    let b: string;
+    let s: string;
+    let e: string;
+
+    if (m >= 60) {
+      b = `date_trunc('hour', timestamp)`;
+      s = `date_trunc('hour', $2::timestamptz)`;
+      e = `date_trunc('hour', $3::timestamptz)`;
+    } else {
+      b = `date_trunc('hour', timestamp) + (FLOOR(EXTRACT(MINUTE FROM timestamp) / ${m})::int * INTERVAL '${m} minutes')`;
+      s = `date_trunc('hour', $2::timestamptz) + (FLOOR(EXTRACT(MINUTE FROM $2::timestamptz) / ${m})::int * INTERVAL '${m} minutes')`;
+      e = `date_trunc('hour', $3::timestamptz) + (FLOOR(EXTRACT(MINUTE FROM $3::timestamptz) / ${m})::int * INTERVAL '${m} minutes')`;
     }
 
     let sql = `
       WITH time_series AS (
         SELECT generate_series(
-          ${timeSeriesStart},
-          ${timeSeriesEnd},
-          INTERVAL '${intervalMinutes} minutes'
+          ${s},
+          ${e},
+          INTERVAL '${m} minutes'
         ) AS time_bucket
       ),
       aggregated AS (
         SELECT
-          ${bucketExpression} as time_bucket,
+          ${b} as time_bucket,
           COUNT(*) as request_count,
           SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as error_count,
           AVG(CASE WHEN duration_ms > 0 THEN duration_ms END) as avg_latency,
@@ -208,7 +214,7 @@ metricsRouter.get('/', requireAuth(storageService.pool), async (req: Request, re
     }
 
     sql += `
-        GROUP BY ${bucketExpression}
+        GROUP BY ${b}
       )
       SELECT
         ts.time_bucket,

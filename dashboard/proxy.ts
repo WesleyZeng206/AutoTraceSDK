@@ -46,7 +46,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   } catch (error) {
     console.error('Session validation error:', error);
-    return NextResponse.next();
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    
+    url.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(url);
   }
 }
 

@@ -101,8 +101,20 @@ export const authRateLimiter: RateLimitRequestHandler = rateLimit({
     });
   },
   skip: (req) => {
-    // Skip rate limiting for session validation endpoints
     return req.path === '/health' || req.path === '/me' || req.path === '/refresh';
+  },
+});
+
+export const registrationRateLimiter: RateLimitRequestHandler = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, handler: (req, res) => {
+    const clientIP = getClientIP(req);
+    console.warn(`[SECURITY] Registration rate limit exceeded for IP: ${clientIP}`);
+    trackSuspiciousActivity(clientIP);
+
+    res.status(429).json({
+      error: 'Too many requests',
+      message: 'Too many registration attempts. Please try again in 1 hour.',
+    });
   },
 });
 

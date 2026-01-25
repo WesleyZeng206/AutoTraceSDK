@@ -37,22 +37,30 @@ if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
   console.log('Trust proxy enabled - using X-Forwarded-For for IP detection');
 }
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '')
+const x = (process.env.ALLOWED_ORIGINS ?? '')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
 
-const corsOptions = allowedOrigins.length > 0
+const isProd = process.env.NODE_ENV === 'production';
+
+if (isProd && x.length === 0) {
+  console.error('FATAL: ALLOWED_ORIGINS must be set in production');
+  process.exit(1);
+}
+
+const corsOptions = x.length > 0
   ? {
-      origin: allowedOrigins,
+      origin: x,
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
       credentials: true,
-      maxAge: 600, // Cache preflight for 10 minutes
+      maxAge: 600,
     }
   : {
-      origin: '*',
+      origin: true,
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-      credentials: false
+      credentials: true,
+      maxAge: 600,
     };
 
 app.use(helmet({
