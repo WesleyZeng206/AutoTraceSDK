@@ -1,50 +1,180 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { TeamProvider } from '@/contexts/TeamContext';
+import { TeamSwitcher } from '@/components/TeamSwitcher';
 
-export default function Documentation() {
-  const { user, logout } = useAuth();
+const sections = [
+  { id: 'getting-started', label: 'Getting Started', subsections: [
+    { id: 'installation', label: 'Installation' },
+    { id: 'quick-start', label: 'Quick Start' },
+  ]},
+  { id: 'configuration', label: 'Configuration', subsections: [
+    { id: 'options', label: 'Options' },
+    { id: 'sampling', label: 'Sampling' },
+    { id: 'retries', label: 'Retries' },
+  ]},
+  { id: 'dashboard', label: 'Dashboard', subsections: [
+    { id: 'metrics', label: 'Metrics' },
+    { id: 'routes', label: 'Routes' },
+    { id: 'charts', label: 'Charts' },
+  ]},
+  { id: 'anomalies', label: 'Anomaly Detection', subsections: [
+    { id: 'how-it-works', label: 'How It Works' },
+    { id: 'severity', label: 'Severity Levels' },
+  ]},
+  { id: 'advanced', label: 'Advanced', subsections: [
+    { id: 'persistence', label: 'Persistent Queue' },
+    { id: 'production', label: 'Production Tips' },
+  ]},
+];
+
+function CodeBlock({ children, title }: { children: string; title?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(children);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <nav className="bg-gradient-to-r from-slate-900 to-slate-800 shadow-lg border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <Link href="/" className="text-xl font-bold text-white hover:text-blue-300 transition-colors">
-                AutoTrace
+    <div className="relative group my-4">
+      {title && (
+        <div className="flex items-center justify-between bg-zinc-800 px-4 py-2 rounded-t-lg border-b border-zinc-700">
+          <span className="text-xs font-medium text-zinc-400">{title}</span>
+        </div>
+      )}
+      <div className={`relative ${title ? 'rounded-b-lg' : 'rounded-lg'}`}>
+        <pre className={`bg-zinc-900 text-zinc-100 p-4 overflow-x-auto text-[13px] leading-relaxed ${title ? 'rounded-b-lg' : 'rounded-lg'}`}>
+          <code>{children}</code>
+        </pre>
+        <button
+          onClick={copy}
+          className="absolute top-3 right-3 p-1.5 rounded bg-zinc-700/50 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 opacity-0 group-hover:opacity-100 transition-all">
+          {copied ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg> ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineCode({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="px-1.5 py-0.5 bg-zinc-100 rounded text-[13px] font-mono text-zinc-800">{children}</code>
+  );
+}
+
+function Callout({ type, children }: { type: 'info' | 'warning' | 'tip'; children: React.ReactNode }) {
+  const styles = {
+    info: 'bg-sky-50 border-sky-200 text-sky-900',
+    warning: 'bg-amber-50 border-amber-200 text-amber-900',
+    tip: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+  };
+  const icons = {
+    info: <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>,
+    warning: <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>,
+    tip: <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>,
+  };
+  return (
+    <div className={`flex gap-3 p-4 rounded-lg border text-sm my-4 ${styles[type]}`}>
+      {icons[type]}
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function PropTable({ props }: { props: { name: string; type: string; required?: boolean; default?: string; description: string }[] }) {
+  return (
+    <div className="my-4 border border-zinc-200 rounded-lg overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-zinc-50 border-b border-zinc-200">
+            <th className="text-left px-4 py-2 font-medium text-zinc-700">Property</th>
+            <th className="text-left px-4 py-2 font-medium text-zinc-700">Type</th>
+            <th className="text-left px-4 py-2 font-medium text-zinc-700">Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.map((prop, i) => (
+            <tr key={prop.name} className={i !== props.length - 1 ? 'border-b border-zinc-100' : ''}>
+              <td className="px-4 py-3">
+                <InlineCode>{prop.name}</InlineCode>
+                {prop.required && <span className="ml-1.5 text-red-500 text-xs">required</span>}
+                <p className="text-zinc-500 text-xs mt-1">{prop.description}</p>
+              </td>
+              <td className="px-4 py-3 text-zinc-600 font-mono text-xs">{prop.type}</td>
+              <td className="px-4 py-3 text-zinc-500 text-xs">{prop.default || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DocsContent() {
+  const { user, logout } = useAuth();
+  const [activeSection, setActiveSection] = useState('getting-started');
+
+  const scrollToSection = (id: string) => {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <nav className="bg-white border-b border-zinc-200 sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">AT</span>
+                </div>
+                <span className="text-base font-semibold text-zinc-900">AutoTrace</span>
               </Link>
-              <div className="flex flex-wrap space-x-2">
-                <Link href="/dashboard"
-                  className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 hover:bg-opacity-50 rounded-md transition-all">
-                  Dashboard
-                </Link>
-                <Link href="/api-keys"
-                  className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 hover:bg-opacity-50 rounded-md transition-all">
-                  API Keys
-                </Link>
-                <Link href="/team-members"
-                  className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 hover:bg-opacity-50 rounded-md transition-all">
-                  Team Members
-                </Link>
-                <Link href="/docs"
-                  className="px-3 py-2 text-sm font-medium bg-blue-600 bg-opacity-90 text-white rounded-md hover:bg-opacity-100 transition-all">
-                  Documentation
+              <div className="flex items-center gap-1">
+                {user ? (<>
+                    <Link href="/dashboard" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+                      Dashboard
+                    </Link>
+                    <Link href="/api-keys" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+                      API Keys
+                    </Link>
+                    <Link href="/team-members" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+                      Team
+                    </Link>
+                  </>
+                ) : null} <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-zinc-900 bg-zinc-100 rounded-md">
+                  Docs
                 </Link>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              {user && (
-                <>
-                  <span className="text-sm text-slate-300">{user.username}</span>
-                  <button
-                    onClick={logout}
-                    className="px-3 py-1.5 text-sm text-slate-300 hover:text-white bg-slate-700 bg-opacity-50 hover:bg-opacity-70 rounded-md transition-all">
-                    Logout
+            <div className="flex items-center gap-4">
+              {user ? (<>
+                  <TeamSwitcher />
+                  <div className="h-6 w-px bg-zinc-200" />
+                  <span className="text-sm text-zinc-600">{user.username}</span>
+                  <button onClick={logout} className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
+                    Sign out
                   </button>
+                </>) : (<>
+                  <Link href="/login" className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors">
+                    Sign in
+                  </Link>
+                  <Link href="/register" className="px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-md transition-colors">
+                    Get Started
+                  </Link>
                 </>
               )}
             </div>
@@ -52,812 +182,361 @@ export default function Documentation() {
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">AutoTrace Documentation</h1>
-            <p className="text-muted-foreground mt-2">
-              How to install and use AutoTrace for monitoring your app
-            </p>
-          </div>
-
-          <Tabs defaultValue="installation" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="installation">Installation</TabsTrigger>
-              <TabsTrigger value="usage">Usage</TabsTrigger>
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
-              <TabsTrigger value="examples">Examples</TabsTrigger>
-              <TabsTrigger value="resilience">Resilience</TabsTrigger>
-            </TabsList>
-
-            {/* Installation Tab */}
-            <TabsContent value="installation" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Step 1: Create an Account</h2>
-                <p className="text-muted-foreground mb-4">
-                  First thing: you need an account and an API key.
-                </p>
-                <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
-                  <li>
-                    <Link href="/register" className="text-blue-600 hover:underline font-medium">
-                      Register
-                    </Link> (or <Link href="/login" className="text-blue-600 hover:underline font-medium">login</Link> if you have an account already)
-                  </li>
-                  <li>Go to <Link href="/api-keys" className="text-blue-600 hover:underline font-medium">API Keys</Link></li>
-                  <li>Create a new API key and give it a name</li>
-                  <li>Copy the key (starts with <code className="bg-slate-100 px-1 py-0.5 rounded text-sm">at_live_</code>)</li>
-                  <li className="text-amber-600 font-medium">Save this somewhere. You can't see it again after closing the page</li>
-                </ol>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Step 2: Install the AutoTrace Client SDK</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium mb-2">NPM</h3>
-                    <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                      <code>npm install autotracesdk</code>
-                    </pre>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium mb-2">Yarn</h3>
-                    <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                      <code>yarn add autotracesdk</code>
-                    </pre>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium mb-2">PNPM</h3>
-                    <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                      <code>pnpm add autotracesdk</code>
-                    </pre>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">What You'll Need</h2>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Node.js version 16 or newer</li>
-                  <li>Express.js 4.x or newer</li>
-                  <li>TypeScript 4.5 or newer (optional, but recommended for better type checking)</li>
+      <div className="max-w-[1400px] mx-auto flex">
+        <aside className="w-64 flex-shrink-0 border-r border-zinc-100 h-[calc(100vh-56px)] sticky top-14 overflow-y-auto py-8 px-6">
+          <nav className="space-y-6">
+            {sections.map((section) => (
+              <div key={section.id}>
+                <button
+                  onClick={() => scrollToSection(section.id)}
+                  className={`text-sm font-semibold mb-2 block w-full text-left ${
+                    activeSection === section.id ? 'text-zinc-900' : 'text-zinc-500 hover:text-zinc-700'
+                  }`}>
+                  {section.label}
+                </button>
+                <ul className="space-y-1 ml-3 border-l border-zinc-100">
+                  {section.subsections.map((sub) => (
+                    <li key={sub.id}>
+                      <button onClick={() => scrollToSection(sub.id)}
+                        className={`text-[13px] pl-3 py-1 block w-full text-left transition-colors ${
+                          activeSection === sub.id ? 'text-zinc-900 border-l-2 border-zinc-900 -ml-px' : 'text-zinc-500 hover:text-zinc-700'}`}>
+                        {sub.label}
+                      </button>
+                    </li>
+                  ))}
                 </ul>
-              </Card>
-            </TabsContent>
+              </div>
+            ))}
+          </nav>
 
-            {/* Usage Tab */}
-            <TabsContent value="usage" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Basic Setup</h2>
-                <p className="text-muted-foreground mb-4">
-                  Add the middleware to your Express app before your routes:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`import express from 'express';
+          <div className="mt-8 pt-6 border-t border-zinc-100">
+            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">Resources</p>
+            <ul className="space-y-2">
+              <li>
+                <a href="https://github.com/WesleyZeng206/AutoTraceSDK" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-600 hover:text-zinc-900 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
+                  GitHub
+                </a>
+              </li>
+              <li>
+                <a href="https://www.npmjs.com/package/autotracesdk" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-600 hover:text-zinc-900 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0v1.336H8.001V8.667h5.334v5.332h-2.669v-.001zm12.001 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331z"/></svg>
+                  npm
+                </a>
+              </li>
+            </ul>
+          </div>
+        </aside>
+
+        <main className="flex-1 min-w-0 px-12 py-10 max-w-3xl">
+          <section id="getting-started" className="scroll-mt-20">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Getting Started</span>
+            <h1 className="text-3xl font-bold text-zinc-900 mt-2 mb-4">AutoTrace SDK</h1>
+            <p className="text-lg text-zinc-600 leading-relaxed mb-8">
+              Lightweight Express.js middleware for automatic request telemetry, latency tracking, and anomaly detection.
+            </p>
+
+            <div className="grid grid-cols-3 gap-4 mb-12">
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h3 className="font-medium text-zinc-900 text-sm">Zero config</h3>
+                <p className="text-xs text-zinc-500 mt-1">Works out of the box with Express.js</p>
+              </div>
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <h3 className="font-medium text-zinc-900 text-sm">Real-time metrics</h3>
+                <p className="text-xs text-zinc-500 mt-1">Latency, errors, percentiles</p>
+              </div>
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 className="font-medium text-zinc-900 text-sm">Anomaly detection</h3>
+                <p className="text-xs text-zinc-500 mt-1">Automatic spike detection</p>
+              </div>
+            </div>
+
+            <h2 id="installation" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Installation</h2>
+            <p className="text-zinc-600 mb-4">Install the SDK with your preferred package manager:</p>
+            <CodeBlock title="Terminal">npm install autotracesdk</CodeBlock>
+            <p className="text-sm text-zinc-500 mt-2">
+              Also available via <InlineCode>yarn add autotracesdk</InlineCode> or <InlineCode>pnpm add autotracesdk</InlineCode>
+            </p>
+
+            <Callout type="info">
+              Requires Node.js 16+ and Express.js 4.x or newer. TypeScript is optional but recommended.
+            </Callout>
+
+            <h2 id="quick-start" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Quick Start</h2>
+            <p className="text-zinc-600 mb-4">
+              First, get your API key from the <Link href="/api-keys" className="text-zinc-900 underline underline-offset-2">API Keys</Link> page. Then add the middleware to your Express app:
+            </p>
+            <CodeBlock title="app.ts">{`import express from 'express';
 import { createAutoTraceSDKMiddleware } from 'autotracesdk';
 
 const app = express();
 
-// Add AutoTrace middleware (before your routes)
 app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'my-service',
+  serviceName: 'my-api',
   ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
+  apiKey: process.env.AUTOTRACE_API_KEY,
 }));
 
-// Your routes
 app.get('/api/users', (req, res) => {
   res.json({ users: [] });
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-});`}</code>
-                </pre>
-              </Card>
+app.listen(3000);`}</CodeBlock>
 
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Configuration Options</h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-gray-900">serviceName <span className="text-red-500">*</span></p>
-                    <p className="text-sm text-muted-foreground">Name for your service in the dashboard</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">ingestionUrl <span className="text-red-500">*</span></p>
-                    <p className="text-sm text-muted-foreground">Where the ingestion service is running</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">apiKey</p>
-                    <p className="text-sm text-muted-foreground">Your API key (starts with at_live_)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">batchSize</p>
-                    <p className="text-sm text-muted-foreground">Events to collect before sending (default: 10)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">batchInterval</p>
-                    <p className="text-sm text-muted-foreground">Max wait time before sending batch in ms (default: 5000)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">debug</p>
-                    <p className="text-sm text-muted-foreground">Show debug logs in console (default: false)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">enableLocalBuffer</p>
-                    <p className="text-sm text-muted-foreground">Buffer events locally if ingestion is down (default: true)</p>
-                  </div>
+            <Callout type="warning">
+              Store your API key securely. Never commit it to version control.
+            </Callout>
+          </section>
+
+          <section id="configuration" className="mt-20 scroll-mt-20">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Configuration</span>
+            <h1 className="text-2xl font-bold text-zinc-900 mt-2 mb-6">Configuration Options</h1>
+
+            <h2 id="options" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">Options</h2>
+            <PropTable props={[
+              { name: 'serviceName', type: 'string', required: true, description: 'Identifies your service in the dashboard' },
+              { name: 'ingestionUrl', type: 'string', required: true, description: 'URL of the ingestion service' },
+              { name: 'apiKey', type: 'string', description: 'Your API key (starts with at_live_)' },
+              { name: 'batchSize', type: 'number', default: '10', description: 'Events to collect before sending' },
+              { name: 'batchInterval', type: 'number', default: '5000', description: 'Max wait time (ms) before flushing' },
+              { name: 'debug', type: 'boolean', default: 'false', description: 'Enable console logging' },
+              { name: 'enableLocalBuffer', type: 'boolean', default: 'true', description: 'Buffer events if ingestion is down' },
+            ]} />
+
+            <h2 id="sampling" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Sampling</h2>
+            <p className="text-zinc-600 mb-4">Reduce telemetry volume while preserving important data:</p>
+            <CodeBlock title="Sampling configuration">{`sampling: {
+  samplingRate: 0.1,           // Sample 10% of requests
+  alwaysSampleErrors: true,    // Always capture errors
+  alwaysSampleSlow: 500,       // Always capture requests >500ms
+  routeRules: [
+    { pattern: '/health', rate: 0.01 },
+    { pattern: '/api/critical', rate: 1.0 },
+  ],
+}`}</CodeBlock>
+
+            <h2 id="retries" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Retries</h2>
+            <p className="text-zinc-600 mb-4">Configure retry behavior for failed telemetry delivery:</p>
+            <CodeBlock title="Retry configuration">{`retryOptions: {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxDelayMs: 10000,
+  jitterMs: 200,
+},
+batchRetryOptions: {
+  maxRetries: 5,
+  delayMs: 2000,
+},`}</CodeBlock>
+          </section>
+
+          <section id="dashboard" className="mt-20 scroll-mt-20">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Dashboard</span>
+            <h1 className="text-2xl font-bold text-zinc-900 mt-2 mb-6">Understanding the Dashboard</h1>
+
+            <h2 id="metrics" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">Metrics</h2>
+            <div className="space-y-4 mb-8">
+              <div className="flex gap-4 p-4 rounded-lg border border-zinc-200">
+                <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">#</span>
                 </div>
-              </Card>
-
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Error Handling</h2>
-                <p className="text-muted-foreground mb-4">
-                  To track errors, add the error handler after your routes:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`import { createAutoTraceSDKMiddleware, createAutoTraceSDKErrorHandler } from 'autotracesdk';
-
-const config = {
-  serviceName: 'my-service',
-  ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
-};
-
-app.use(createAutoTraceSDKMiddleware(config));
-
-// Your routes
-app.get('/api/error', (req, res) => {
-  throw new Error('Something went wrong!');
-});
-
-// Add error handler at the end (after all routes)
-app.use(createAutoTraceSDKErrorHandler(config));`}</code>
-                </pre>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Viewing Your Data</h2>
-                <p className="text-muted-foreground mb-4">
-                  That's it. Now check your data:
-                </p>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li>Start your app and send some test requests</li>
-                  <li>Go to the <Link href="/dashboard" className="text-blue-600 hover:underline font-medium">Dashboard</Link> to see telemetry</li>
-                  <li>View metrics like request count, error rate, response time</li>
-                  <li>Use time range selector for different periods</li>
-                  <li>Change aggregation interval to zoom in/out</li>
-                </ol>
-              </Card>
-            </TabsContent>
-
-            {/* Dashboard Tab */}
-            <TabsContent value="dashboard" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Dashboard Overview</h2>
-                <p className="text-muted-foreground mb-4">
-                  Dashboard shows recent telemetry for your app. Most panels update when you change the time range or interval, and the anomaly card refreshes every 60 seconds.
-                </p>
-                <div className="space-y-3">
-                  <p className="font-medium text-gray-900">Features:</p>
-                  <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                    <li><strong>Anomalies auto-refresh:</strong> Updates every 60 seconds</li>
-                    <li><strong>Metrics refresh:</strong> Change time range or interval to reload</li>
-                    <li><strong>Time range:</strong> 15 minutes to 7 days</li>
-                    <li><strong>Intervals:</strong> 15m, 30m, or 1h aggregation</li>
-                    <li><strong>Teams:</strong> Switch teams with the selector</li>
-                    <li><strong>Anomaly Detection:</strong> Automatically detects spikes in latency and errors</li>
-                  </ul>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Total Requests</h4>
+                  <p className="text-sm text-zinc-500">HTTP requests received in the selected time range</p>
                 </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Metrics Displayed</h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-gray-900">Total Requests</p>
-                    <p className="text-sm text-muted-foreground">Total number of HTTP requests received in the selected time range</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Error Rate</p>
-                    <p className="text-sm text-muted-foreground">Percentage of requests that resulted in 4xx or 5xx status codes</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Average Latency</p>
-                    <p className="text-sm text-muted-foreground">Mean response time across all requests (excludes zero latency requests)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">P50 Latency (Median)</p>
-                    <p className="text-sm text-muted-foreground">50% of requests complete faster than this value</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">P90 Latency</p>
-                    <p className="text-sm text-muted-foreground">90% of requests complete faster than this value</p>
-                  </div>
+              </div>
+              <div className="flex gap-4 p-4 rounded-lg border border-zinc-200">
+                <div className="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">%</span>
                 </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Endpoint Status Thresholds</h2>
-                <p className="text-muted-foreground mb-4">
-                  Route color codes:
-                </p>
-
-                <div className="space-y-4">
-                  <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded">
-                    <p className="font-semibold text-green-900 mb-2">🟢 HEALTHY</p>
-                    <p className="text-sm text-green-800 mb-2">Route looks good</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-green-800 ml-4">
-                      <li>Error rate &lt; 1%</li>
-                      <li>AND Average latency &lt; 500ms</li>
-                    </ul>
-                    <p className="text-xs text-green-700 mt-2 italic">Example: 0.5% errors, 200ms latency</p>
-                  </div>
-
-                  <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
-                    <p className="font-semibold text-yellow-900 mb-2">🟡 WARNING</p>
-                    <p className="text-sm text-yellow-800 mb-2">Might want to check this</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-yellow-800 ml-4">
-                      <li>Error rate ≥ 1% (but &lt; 5%)</li>
-                      <li>OR Average latency ≥ 500ms (but &lt; 1000ms)</li>
-                    </ul>
-                    <p className="text-xs text-yellow-700 mt-2 italic">Examples: 2% errors + 300ms latency, or 0.2% errors + 600ms latency</p>
-                  </div>
-
-                  <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
-                    <p className="font-semibold text-red-900 mb-2">🔴 CRITICAL</p>
-                    <p className="text-sm text-red-800 mb-2">Fix this ASAP</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-800 ml-4">
-                      <li>Error rate ≥ 5%</li>
-                      <li>OR Average latency ≥ 1000ms (1 second)</li>
-                    </ul>
-                    <p className="text-xs text-red-700 mt-2 italic">Examples: 7% errors + 100ms latency, or 0.5% errors + 1200ms latency</p>
-                  </div>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Error Rate</h4>
+                  <p className="text-sm text-zinc-500">Percentage of 4xx and 5xx responses</p>
                 </div>
-
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
-                  <p className="text-sm text-blue-900">
-                    <strong>Note:</strong> Status uses the worst metric. Low errors but high latency still gets marked WARNING/CRITICAL.
-                  </p>
+              </div>
+              <div className="flex gap-4 p-4 rounded-lg border border-zinc-200">
+                <div className="w-10 h-10 rounded-lg bg-sky-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">ms</span>
                 </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Response Time Distribution</h2>
-                <p className="text-muted-foreground mb-4">
-                  Bar chart showing request speeds:
-                </p>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-medium">0-50ms</span>
-                    <span>Very fast</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-medium">50-100ms</span>
-                    <span>Fast</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-medium">100-200ms</span>
-                    <span>Normal</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-medium">200-500ms</span>
-                    <span>Slow</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-medium">500ms-1s</span>
-                    <span>Very slow</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">1s+</span>
-                    <span>Too slow</span>
-                  </div>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Latency (P50, P90, P99)</h4>
+                  <p className="text-sm text-zinc-500">Response time percentiles across all requests</p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Helps you see if most requests are fast or if some are dragging down averages.
-                </p>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Top Routes Table</h2>
-                <p className="text-muted-foreground mb-4">
-                  Shows top 10 busiest endpoints:
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-medium text-gray-900">Route</p>
-                    <p className="text-sm text-muted-foreground">The endpoint path (e.g., /api/users, /health)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Method</p>
-                    <p className="text-sm text-muted-foreground">HTTP method with color coding (GET=blue, POST=green, PUT=yellow, DELETE=red)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Avg Latency</p>
-                    <p className="text-sm text-muted-foreground">Average response time for this route</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Requests</p>
-                    <p className="text-sm text-muted-foreground">Total number of requests to this route</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Error Rate</p>
-                    <p className="text-sm text-muted-foreground">Percentage of requests that returned 4xx or 5xx status codes</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Status</p>
-                    <p className="text-sm text-muted-foreground">Health status badge (Healthy/Warning/Critical)</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Interpreting the Charts</h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-gray-900 mb-2">Latency Over Time Chart</p>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Shows three lines representing different percentiles:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                      <li><strong className="text-green-600">P50 (Median):</strong> Typical user experience</li>
-                      <li><strong className="text-orange-600">P95:</strong> Experience of your slower requests</li>
-                      <li><strong className="text-red-600">P99:</strong> Worst-case scenarios (outliers)</li>
-                    </ul>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Spikes in P95/P99 even when P50 is fine means some users are getting slow responses.
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-gray-900 mb-2">What to Look For</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                      <li>Sudden spikes in latency or error rates</li>
-                      <li>Growing trends over time (degrading performance)</li>
-                      <li>Routes with high request counts but poor performance</li>
-                      <li>Distribution skewed toward slower response times</li>
-                      <li>Large gaps between P50 and P99 (inconsistent performance)</li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Anomalies Tab */}
-            <TabsContent value="anomalies" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">What are Anomalies?</h2>
-                <p className="text-muted-foreground mb-4">
-                  AutoTrace automatically detects unusual patterns in your application metrics using statistical analysis.
-                  Anomalies are performance issues or error spikes that deviate significantly from normal behavior.
-                </p>
-                <div className="space-y-3">
-                  <p className="font-medium text-gray-900">Detected Anomalies:</p>
-                  <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                    <li><strong>Latency Spikes:</strong> When average response time is abnormally high</li>
-                    <li><strong>Error Rate Increases:</strong> When error percentage jumps above baseline</li>
-                    <li><strong>Service Degradation:</strong> Gradual performance decline over time</li>
-                  </ul>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">How Anomaly Detection Works</h2>
-                <p className="text-muted-foreground mb-4">
-                  AutoTrace uses statistical methods to identify anomalies without requiring machine learning models:
-                </p>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">1. Baseline Calculation</p>
-                    <p className="text-sm text-muted-foreground">
-                      System analyzes the last 48 hours of metrics to establish normal patterns for each service and route.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">2. Statistical Scoring (Z-Score)</p>
-                    <p className="text-sm text-muted-foreground">
-                      Each metric is scored based on how many standard deviations it is from the baseline average.
-                      A Z-score of 3.0 means the value is 3 standard deviations away from normal.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">3. Severity Classification</p>
-                    <p className="text-sm text-muted-foreground">
-                      Anomalies are automatically categorized as Critical, Warning, or Info based on their Z-score.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">4. Real-Time Scoring</p>
-                    <p className="text-sm text-muted-foreground">
-                      The ingestion API re-runs detection every time you query `/anomalies/realtime`, so the dashboard shows spikes seconds after telemetry is ingested—no cron job required.
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Anomaly Severity Levels</h2>
-                <div className="space-y-4">
-                  <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
-                    <p className="font-semibold text-red-900 mb-2">🔴 CRITICAL</p>
-                    <p className="text-sm text-red-800 mb-2">Immediate attention required</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-red-800 ml-4">
-                      <li>Z-score ≥ 3.0 (99.7th percentile)</li>
-                      <li>Metric is 3+ standard deviations from baseline</li>
-                      <li>Indicates major performance degradation or outage</li>
-                    </ul>
-                    <p className="text-xs text-red-700 mt-2 italic">
-                      Example: Average latency jumped from 100ms to 500ms, or error rate went from 1% to 15%
-                    </p>
-                  </div>
-
-                  <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">
-                    <p className="font-semibold text-yellow-900 mb-2">⚠️ WARNING</p>
-                    <p className="text-sm text-yellow-800 mb-2">Should be investigated soon</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-yellow-800 ml-4">
-                      <li>Z-score ≥ 2.0 and &lt; 3.0 (95th percentile)</li>
-                      <li>Metric is 2-3 standard deviations from baseline</li>
-                      <li>Early indicator of potential issues</li>
-                    </ul>
-                    <p className="text-xs text-yellow-700 mt-2 italic">
-                      Example: Latency increased from 100ms to 250ms, or error rate went from 1% to 5%
-                    </p>
-                  </div>
-
-                  <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
-                    <p className="font-semibold text-blue-900 mb-2">ℹ️ INFO</p>
-                    <p className="text-sm text-blue-800 mb-2">Slight deviation, usually not shown</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-blue-800 ml-4">
-                      <li>Z-score &lt; 2.0</li>
-                      <li>Within normal variation range</li>
-                      <li>Not displayed in dashboard by default</li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Anomaly Card Display</h2>
-                <p className="text-muted-foreground mb-4">
-                  When anomalies are detected, they appear in a dedicated card on the dashboard:
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-medium text-gray-900">Service Name</p>
-                    <p className="text-sm text-muted-foreground">Which service experienced the anomaly</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Route</p>
-                    <p className="text-sm text-muted-foreground">The specific endpoint affected</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Metric</p>
-                    <p className="text-sm text-muted-foreground">Whether it's avg_latency or error_rate</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Z-Score</p>
-                    <p className="text-sm text-muted-foreground">How far the metric deviated from baseline (higher = more unusual)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Baseline</p>
-                    <p className="text-sm text-muted-foreground">The normal expected value for comparison</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Time</p>
-                    <p className="text-sm text-muted-foreground">When the anomaly occurred (e.g., "15m ago", "2h ago")</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Interpreting Anomalies</h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-gray-900 mb-2">What Causes Anomalies?</p>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
-                      <li><strong>Traffic Spikes:</strong> Sudden increase in requests can slow down responses</li>
-                      <li><strong>Code Deployments:</strong> New code may introduce performance regressions</li>
-                      <li><strong>Database Issues:</strong> Slow queries or connection pool exhaustion</li>
-                      <li><strong>External Dependencies:</strong> Third-party APIs or services degrading</li>
-                      <li><strong>Resource Constraints:</strong> Running out of CPU, memory, or disk space</li>
-                      <li><strong>Network Problems:</strong> Latency or packet loss in infrastructure</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-gray-900 mb-2">When to Take Action</p>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
-                      <li><strong>Critical Anomalies:</strong> Investigate immediately, check logs and infrastructure</li>
-                      <li><strong>Warning Anomalies:</strong> Monitor closely, consider investigating if they persist</li>
-                      <li><strong>Multiple Routes Affected:</strong> Likely a systemic issue (database, infrastructure)</li>
-                      <li><strong>Single Route Affected:</strong> Specific endpoint problem (code bug, slow query)</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-gray-900 mb-2">False Positives</p>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Sometimes anomalies are detected for legitimate reasons:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                      <li>Scheduled batch jobs that temporarily increase latency</li>
-                      <li>Expected traffic patterns (e.g., higher load during business hours)</li>
-                      <li>Marketing campaigns or product launches increasing traffic</li>
-                    </ul>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      These are normal and can be expected. The system will adjust baselines over time.
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Anomaly Detection Frequency</h2>
-                <p className="text-muted-foreground mb-4">
-                  Real-time scoring means there is no background cron job to maintain:
-                </p>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-start gap-3">
-                    <span className="font-semibold text-gray-900 min-w-[140px]">Analysis Trigger:</span>
-                    <span>On-demand whenever the dashboard or API calls <code className="bg-slate-100 px-1 rounded">/anomalies/realtime</code></span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-semibold text-gray-900 min-w-[140px]">Historical Window:</span>
-                    <span>Defaults to 48 hours (configurable via `windowHours` or env)</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-semibold text-gray-900 min-w-[140px]">Dashboard Refresh:</span>
-                    <span>Every 60 seconds for the anomaly card</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-semibold text-gray-900 min-w-[140px]">Data Source:</span>
-                    <span>Directly queries <code className="bg-slate-100 px-1 rounded">requests_raw</code>, so retention matches your telemetry policy</span>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">No Anomalies? That's Good!</h2>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-900 mb-2">
-                    <strong>If you don't see any anomalies, your application is performing normally.</strong>
-                  </p>
-                  <p className="text-sm text-green-800">
-                    Anomalies only appear when metrics deviate significantly from baseline patterns.
-                    A healthy application will have few or no anomalies most of the time.
-                  </p>
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Examples Tab */}
-            <TabsContent value="examples" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Advanced Sampling Configuration</h2>
-                <p className="text-muted-foreground mb-4">
-                  Sample requests to reduce telemetry volume:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`import { createAutoTraceSDKMiddleware } from 'autotracesdk';
-
-app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'my-service',
-  ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
-
-  sampling: {
-    // Base sampling rate (10% of requests)
-    samplingRate: 0.1,
-
-    // Always sample errors (4xx and 5xx responses)
-    alwaysSampleErrors: true,
-
-    // Always sample slow requests (>500ms)
-    alwaysSampleSlow: 500,
-
-    // Route-specific sampling rules
-    routeRules: [
-      { pattern: '/health', rate: 0.01 },      // 1% of health checks
-      { pattern: '/api/critical', rate: 1.0 }, // 100% of critical endpoints
-    ],
-
-    // Status-code based sampling
-    statusRules: [
-      { statuses: [500, 502, 503], rate: 1.0 }, // All server errors
-      { min: 200, max: 299, rate: 0.05 },       // 5% of successful requests
-    ],
-  }
-}));`}</code>
-                </pre>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Retry Configuration</h2>
-                <p className="text-muted-foreground mb-4">
-                  Set up retries for when telemetry delivery fails:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'my-service',
-  ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
-
-  // HTTP sender retry options
-  retryOptions: {
-    maxRetries: 3,           // Retry up to 3 times
-    baseDelayMs: 1000,       // Start with 1 second delay
-    maxDelayMs: 10000,       // Max delay of 10 seconds
-    jitterMs: 200,           // Add random jitter
-  },
-
-  // Batch flush retry options
-  batchRetryOptions: {
-    maxRetries: 5,           // Retry batch flush 5 times
-    delayMs: 2000,           // Wait 2 seconds between retries
-  },
-
-  enableLocalBuffer: true,   // Buffer events if ingestion is down
-}));`}</code>
-                </pre>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Batch Performance Tuning</h2>
-                <p className="text-muted-foreground mb-4">
-                  Adjust batch settings based on your traffic:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`// High-traffic service (1000+ req/min)
-app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'high-traffic-api',
-  ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
-  batchSize: 500,          // Larger batches
-  batchInterval: 2000,     // Flush every 2 seconds
-}));
-
-// Low-traffic service (<100 req/min)
-app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'low-traffic-api',
-  ingestionUrl: 'http://localhost:4000/telemetry',
-  apiKey: 'at_live_your_api_key_here',
-  batchSize: 50,           // Smaller batches
-  batchInterval: 10000,    // Flush every 10 seconds
-}));`}</code>
-                </pre>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Environment Configuration</h2>
-                <p className="text-muted-foreground mb-4">
-                  Using env vars for config:
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`// .env file
-AUTOTRACE_API_KEY=at_live_your_api_key_here
-AUTOTRACE_SERVICE_NAME=my-service
-AUTOTRACE_INGESTION_URL=https://autotrace.yourdomain.com
-AUTOTRACE_BATCH_SIZE=100
-AUTOTRACE_BATCH_INTERVAL=5000
-AUTOTRACE_SAMPLING_RATE=1.0
-
-// In your application
-import { createAutoTraceSDKMiddleware } from 'autotracesdk';
-
-app.use(createAutoTraceSDKMiddleware({
-  apiKey: process.env.AUTOTRACE_API_KEY,
-  serviceName: process.env.AUTOTRACE_SERVICE_NAME,
-  ingestionUrl: process.env.AUTOTRACE_INGESTION_URL,
-  batchSize: parseInt(process.env.AUTOTRACE_BATCH_SIZE || '100'),
-  batchInterval: parseInt(process.env.AUTOTRACE_BATCH_INTERVAL || '5000'),
-  sampling: {
-    samplingRate: parseFloat(process.env.AUTOTRACE_SAMPLING_RATE || '1.0'),
-  },
-}));`}</code>
-                </pre>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Dashboard Aggregation</h2>
-                <p className="text-muted-foreground mb-4">
-                  The AutoTrace backend automatically pre-computes metrics for fast dashboard queries:
-                </p>
-                <div className="space-y-3 text-muted-foreground">
-                  <p className="font-medium text-gray-900">How Aggregation Works:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Raw telemetry events are stored in the database</li>
-                    <li>Background aggregator computes hourly rollups (counts, latencies, percentiles)</li>
-                    <li>Dashboard queries use pre-computed aggregates for instant loading</li>
-                    <li>Aggregation runs automatically at configurable intervals</li>
-                  </ul>
-                  <p className="font-medium text-gray-900 mt-4">Aggregation Intervals:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li><strong>15 min / 30 min / 1 hour</strong> for chart granularity</li>
-                    <li>Shorter intervals = more detail, longer query times</li>
-                    <li>Longer intervals = smoother charts, faster queries</li>
-                  </ul>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Production Best Practices</h2>
-                <div className="space-y-3 text-muted-foreground">
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Use env vars for API keys and config</li>
-                    <li>Sample high-traffic endpoints (health checks, static assets)</li>
-                    <li>Always sample errors with <code className="bg-slate-100 px-1 py-0.5 rounded text-sm">alwaysSampleErrors: true</code></li>
-                    <li>Adjust batch size based on traffic</li>
-                    <li>Enable local buffering to avoid data loss if ingestion goes down</li>
-                    <li>Use HTTPS for ingestion URL in prod</li>
-                    <li>Check dashboard regularly</li>
-                    <li>Set retry limits so you don't overwhelm ingestion</li>
-                  </ul>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="resilience" className="space-y-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Persistent Queue Configuration</h2>
-                <p className="text-muted-foreground mb-4">
-                  AutoTrace SDK can keep telemetry safe on disk whenever networks or deploys interrupt delivery. Enable it via <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">persistentQueue</code>.
-                </p>
-                <pre className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto">
-                  <code>{`import { createAutoTraceSDKMiddleware } from 'autotracesdk';
-
-app.use(createAutoTraceSDKMiddleware({
-  serviceName: 'checkout-api',
-  ingestionUrl: process.env.AUTOTRACE_URL,
-  apiKey: process.env.AUTOTRACE_KEY,
-  persistentQueue: {
-    enabled: true,
-    queueDir: './.autotrace-queue',
-    maxQueueSize: 10000,     // trims oldest entries past this cap
-    persistInterval: 1000,   // ms between disk flushes
-    autoFlushOnExit: true    // drain buffer during shutdown
-  }
-}));`}</code>
-                </pre>
-                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  <p>Runtime behavior:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Events are appended to JSONL files per process ID.</li>
-                    <li>Oldest entries are dropped once <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">maxQueueSize</code> is reached.</li>
-                    <li>The queue replays automatically once ingestion responds again.</li>
-                    <li>Set <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">autoFlushOnExit</code> to false if you manage shutdown yourself.</li>
-                  </ul>
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* Additional Resources */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Additional Resources</h2>
-            <div className="space-y-2">
-              <Link href="/dashboard" className="block text-blue-600 hover:underline">
-                → View Dashboard
-              </Link>
-              <Link href="/api-keys" className="block text-blue-600 hover:underline">
-                → Manage API Keys
-              </Link>
-              <Link href="/team-members" className="block text-blue-600 hover:underline">
-                → Team Management
-              </Link>
-              <a href="https://github.com/WesleyZeng206/AutoTraceSDK" target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline">
-                → GitHub Repository
-              </a>
-              <a href="https://github.com/WesleyZeng206/AutoTraceSDK/issues" target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline">
-                → Report an Issue
-              </a>
+              </div>
             </div>
-          </Card>
-        </div>
+
+            <h2 id="routes" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Route Status</h2>
+            <p className="text-zinc-600 mb-4">Routes are color-coded based on health thresholds:</p>
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center gap-3 text-sm">
+                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span className="font-medium text-zinc-900">Healthy</span>
+                <span className="text-zinc-500">Error rate &lt;1% and latency &lt;500ms</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                <span className="font-medium text-zinc-900">Warning</span>
+                <span className="text-zinc-500">Error rate 1-5% or latency 500ms-1s</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                <span className="font-medium text-zinc-900">Critical</span>
+                <span className="text-zinc-500">Error rate &gt;5% or latency &gt;1s</span>
+              </div>
+            </div>
+
+            <h2 id="charts" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Charts</h2>
+            <p className="text-zinc-600 mb-4">
+              The latency chart shows three percentile lines:
+            </p>
+            <ul className="list-none space-y-2 text-sm text-zinc-600">
+              <li className="flex items-center gap-2">
+                <span className="w-8 h-0.5 bg-emerald-500"></span>
+                <span><strong>P50</strong> — Median response time (typical experience)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-8 h-0.5 bg-amber-500"></span>
+                <span><strong>P95</strong> — 95th percentile (slower requests)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-8 h-0.5 bg-red-500"></span>
+                <span><strong>P99</strong> — 99th percentile (worst case)</span>
+              </li>
+            </ul>
+            <Callout type="tip">
+              Large gaps between P50 and P99 indicate inconsistent performance. Investigate outliers.
+            </Callout>
+          </section>
+
+          <section id="anomalies" className="mt-20 scroll-mt-20">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Anomaly Detection</span>
+            <h1 className="text-2xl font-bold text-zinc-900 mt-2 mb-6">Automatic Anomaly Detection</h1>
+            <p className="text-zinc-600 mb-8">
+              AutoTrace automatically detects unusual patterns using statistical analysis. No ML models required.
+            </p>
+
+            <h2 id="how-it-works" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">How It Works</h2>
+            <ol className="space-y-4 mb-8">
+              <li className="flex gap-4">
+                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Baseline Calculation</h4>
+                  <p className="text-sm text-zinc-500">Analyzes 48 hours of metrics to establish normal patterns</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Z-Score Calculation</h4>
+                  <p className="text-sm text-zinc-500">Measures how far current metrics deviate from the baseline</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
+                <div>
+                  <h4 className="font-medium text-zinc-900">Real-time Scoring</h4>
+                  <p className="text-sm text-zinc-500">Detection runs on-demand when you query the dashboard</p>
+                </div>
+              </li>
+            </ol>
+
+            <h2 id="severity" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Severity Levels</h2>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border-l-4 border-red-500 bg-red-50">
+                <h4 className="font-semibold text-red-900">Critical</h4>
+                <p className="text-sm text-red-800">Z-score 3.0+ — Investigate immediately</p>
+              </div>
+              <div className="p-4 rounded-lg border-l-4 border-amber-500 bg-amber-50">
+                <h4 className="font-semibold text-amber-900">Warning</h4>
+                <p className="text-sm text-amber-800">Z-score 2.0-3.0 — Monitor closely</p>
+              </div>
+              <div className="p-4 rounded-lg border-l-4 border-zinc-300 bg-zinc-50">
+                <h4 className="font-semibold text-zinc-700">Info</h4>
+                <p className="text-sm text-zinc-600">Z-score &lt;2.0 — Within normal variation</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="advanced" className="mt-20 scroll-mt-20">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Advanced</span>
+            <h1 className="text-2xl font-bold text-zinc-900 mt-2 mb-6">Advanced Configuration</h1>
+
+            <h2 id="persistence" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">Persistent Queue</h2>
+            <p className="text-zinc-600 mb-4">
+              Keep telemetry safe on disk during network interruptions or deployments:
+            </p>
+            <CodeBlock title="Persistent queue">{`persistentQueue: {
+  enabled: true,
+  queueDir: './.autotrace-queue',
+  maxQueueSize: 10000,
+  persistInterval: 1000,
+  autoFlushOnExit: true,
+}`}</CodeBlock>
+            <p className="text-sm text-zinc-500 mt-4">
+              Events are stored as JSONL files and replayed automatically when ingestion recovers.
+            </p>
+
+            <h2 id="production" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Production Tips</h2>
+            <ul className="space-y-3 text-sm text-zinc-600">
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Use environment variables for API keys and URLs</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Sample high-traffic endpoints like <InlineCode>/health</InlineCode></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Always enable <InlineCode>alwaysSampleErrors: true</InlineCode></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Enable local buffering for resilience</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Use HTTPS for ingestion URL in production</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                <span>Set reasonable retry limits to avoid overwhelming ingestion</span>
+              </li>
+            </ul>
+          </section>
+
+          <footer className="mt-20 pt-8 border-t border-zinc-100">
+            <p className="text-sm text-zinc-500">
+              Need help? <a href="https://github.com/WesleyZeng206/AutoTraceSDK/issues" target="_blank" rel="noopener noreferrer" className="text-zinc-900 underline underline-offset-2">Open an issue</a> on GitHub.
+            </p>
+          </footer>
+        </main>
       </div>
     </div>
   );
+}
+
+function DocsWrapper() {
+  const { user } = useAuth();
+
+  if (user) {
+    return (
+      <TeamProvider>
+        <DocsContent />
+      </TeamProvider>);
+  }
+
+  return <DocsContent />;
+}
+
+export default function Documentation() {
+  return <DocsWrapper />;
 }

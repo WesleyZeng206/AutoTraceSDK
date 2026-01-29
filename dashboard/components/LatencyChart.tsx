@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, Brush } from 'recharts';
 
@@ -68,6 +68,33 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
       setBrushEndIndex(chartData.length - 1);
     }
   }, [chartData, rangeHours, interval]);
+
+  const handleWheelZoom = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+
+    event.preventDefault();
+    if (!chartData || chartData.length === 0) {
+      return;
+    }
+
+    const maxIndex = chartData.length - 1;
+    const start = Math.max(0, Math.min(brushStartIndex, maxIndex));
+    const end = Math.max(0, Math.min(brushEndIndex, maxIndex));
+
+    const span = Math.max(1, end - start + 1);
+    const center = Math.round((start + end) / 2);
+    const zoomIn = event.deltaY < 0;
+    const nextSpan = Math.max(1, Math.min(chartData.length, zoomIn ? Math.floor(span * 0.85) : Math.ceil(span / 0.85)));
+    const nextStart = Math.max(0, Math.min(maxIndex - nextSpan + 1, center - Math.floor(nextSpan / 2)));
+    const nextEnd = Math.min(maxIndex, nextStart + nextSpan - 1);
+
+    if (nextStart === start && nextEnd === end) {
+      return;
+    }
+
+    setBrushStartIndex(nextStart);
+    setBrushEndIndex(nextEnd);
+  }, [chartData, brushStartIndex, brushEndIndex]);
 
   const visibleChartData = useMemo(() => {
     if (!chartData || chartData.length === 0) return chartData;
@@ -158,7 +185,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="w-full" style={{ height: '500px', marginBottom: '10px' }}>
+        <div className="w-full" style={{ height: '500px', marginBottom: '10px' }} onWheel={handleWheelZoom}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={visibleChartData}
@@ -175,8 +202,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                 angle={-45}
                 textAnchor="end"
                 height={60}
-                interval="preserveStartEnd"
-              />
+                interval="preserveStartEnd"/>
               <YAxis
                 stroke="hsl(var(--muted-foreground))"
                 style={{ fontSize: '12px' }}
@@ -189,8 +215,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                 }}
                 domain={yAxisDomain}
                 ticks={yAxisTicks}
-                tickCount={yAxisTicks?.length}
-              />
+                tickCount={yAxisTicks?.length}/>
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
@@ -202,8 +227,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                 formatter={(value: number, name: string) => {
                   const roundedValue = Math.round(value * 100) / 100;
                   return [`${roundedValue}ms`, name];
-                }}
-              />
+                }}/>
               <Legend verticalAlign="bottom" height={50} wrapperStyle={{ paddingTop: '30px' }} />
               <Line
                 type="monotone"
@@ -212,8 +236,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                 strokeWidth={2}
                 name="Average"
                 dot={{ fill: 'hsl(142 76% 36%)', r: 3 }}
-                activeDot={{ r: 5 }}
-              />
+                activeDot={{ r: 5 }}/>
               <Line
                 type="monotone"
                 dataKey="p50Latency"
@@ -221,17 +244,14 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                 strokeWidth={2}
                 name="P50"
                 dot={{ fill: 'hsl(217 91% 60%)', r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-              <Line
-                type="monotone"
+                activeDot={{ r: 5 }}/>
+              <Line type="monotone"
                 dataKey="p90Latency"
                 stroke="hsl(24 100% 50%)"
                 strokeWidth={2}
                 name="P90"
                 dot={{ fill: 'hsl(24 100% 50%)', r: 3 }}
-                activeDot={{ r: 5 }}
-              />
+                activeDot={{ r: 5 }}/>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -251,8 +271,7 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={{ top: 15, right: 30, left: 20, bottom: 35 }}
-            >
+              margin={{ top: 15, right: 30, left: 20, bottom: 35 }}>
               <Brush
                 dataKey="timestamp"
                 height={50}
@@ -267,15 +286,13 @@ export function LatencyChart({ data, rangeHours, interval, isLoading }: LatencyC
                     setBrushStartIndex(range.startIndex);
                     setBrushEndIndex(range.endIndex);
                   }
-                }}
-              >
+                }}>
                 <Line
                   type="monotone"
                   dataKey="p90Latency"
                   stroke="hsl(24 100% 50%)"
                   strokeWidth={2}
-                  dot={false}
-                />
+                  dot={false}/>
               </Brush>
             </LineChart>
           </ResponsiveContainer>

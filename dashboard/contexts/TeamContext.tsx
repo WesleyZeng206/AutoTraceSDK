@@ -28,7 +28,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
 
       setCurrentTeamState(teams[0]);
+      localStorage.setItem('current_team_id', teams[0].id);
+      return;
     }
+    setCurrentTeamState(null);
   }, [teams]);
 
   const setCurrentTeam = (team: Team) => {
@@ -39,8 +42,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   return (
     <TeamContext.Provider value={{ currentTeam, setCurrentTeam }}>
       {children}
-    </TeamContext.Provider>
-  );
+    </TeamContext.Provider>);
 }
 
 export function useTeam() {

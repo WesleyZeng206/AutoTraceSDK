@@ -7,16 +7,11 @@ const publicRoutes = ['/', '/login', '/register'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/auth') ||
-    pathname === '/favicon.ico'
-  ) {
+  if (pathname.startsWith('/_next') || pathname.startsWith('/api/auth') || pathname === '/favicon.ico') {
     return NextResponse.next();
   }
 
@@ -30,7 +25,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${dashboardConfig.publicIngestionUrl}/auth/me`, {
+    const response = await fetch(`${dashboardConfig.internalIngestionUrl}/auth/me`, {
       headers: {
         Authorization: `Bearer ${sessionToken}`,
       },
@@ -55,7 +50,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|public).*)',],
 };

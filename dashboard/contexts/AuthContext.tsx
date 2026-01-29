@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTeams(null);
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
       setUser(null);
       setTeams(null);
     } finally {
@@ -51,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string, rememberMe?: boolean) => {
-    await apiLogin(email, password, rememberMe);
+    const result = await apiLogin(email, password, rememberMe);
     await refreshUser();
     router.push('/dashboard');
   };
@@ -60,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiLogout();
     setUser(null);
     setTeams(null);
+    localStorage.removeItem('current_team_id');
     router.push('/login');
   };
 

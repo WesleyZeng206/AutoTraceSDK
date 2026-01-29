@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Use INTERNAL_INGESTION_URL for server-side requests (Docker network)
-// Falls back to NEXT_PUBLIC_INGESTION_URL for local development
 const INGESTION_URL = process.env.INTERNAL_INGESTION_URL || process.env.NEXT_PUBLIC_INGESTION_URL || 'http://localhost:4000';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -23,17 +22,22 @@ export async function POST(request: NextRequest) {
     }
 
     const res = NextResponse.json(data, { status: 200 });
+
     const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
+    const tokenMatch = setCookie?.match(/session_token=([^;]+)/);
+    if (tokenMatch?.[1]) {
+      const maxAge = body?.rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60;
+      res.cookies.set('session_token', tokenMatch[1], { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge });
+    } else if (setCookie) {
       res.headers.set('set-cookie', setCookie);
     }
 
     return res;
   } catch (error) {
-    console.error('Login proxy failed:', error);
+    console.error('Login proxy error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Unable to connect to authentication service' },
+      { status: 503 }
     );
   }
 }
