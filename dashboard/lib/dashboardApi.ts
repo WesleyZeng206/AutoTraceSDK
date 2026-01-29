@@ -37,9 +37,7 @@ export async function fetchServices(teamId: string): Promise<string[]> {
   return services;
 }
 
-export async function fetchMetrics(
-  params: RangeParams & { interval: string }
-): Promise<MetricDataPoint[]> {
+export async function fetchMetrics(params: RangeParams & { interval: string }): Promise<MetricDataPoint[]> {
   const url = buildUrl('/api/metrics', params);
   const { metrics } = await fetchJson<{ metrics: MetricDataPoint[] }>(url);
   return metrics ?? [];
@@ -100,6 +98,47 @@ export async function fetchAnomalies(params: RangeParams & { severity?: string; 
   const url = buildUrl('/api/anomalies/realtime', apiParams);
   const { anomalies } = await fetchJson<{ anomalies: AnomalyData[] }>(url);
   return anomalies ?? [];
+}
+
+export interface EventData {
+  request_id: string;
+  service_name: string;
+  route: string;
+  method: string;
+  status_code: number;
+  duration_ms: number;
+  timestamp: string;
+  error_type: string | null;
+  error_message: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface EventsResponse {
+  events: EventData[];
+  total: number;
+  count: number;
+}
+
+export async function fetchEvents( params: RangeParams & { route: string; limit?: number; offset?: number; statusMin?: number; statusMax?: number }): Promise<EventsResponse> {
+  const apiParams: Record<string, string> = {
+    teamId: params.teamId,
+    startTime: params.startTime,
+    endTime: params.endTime,
+    route: params.route,
+  };
+  
+  if (params.limit) {
+    apiParams.limit = params.limit.toString();
+  }
+
+  if (params.offset) apiParams.offset = params.offset.toString();
+
+  if (params.statusMin) apiParams.statusMin = params.statusMin.toString();
+
+  if (params.statusMax) apiParams.statusMax = params.statusMax.toString();
+
+  const url = buildUrl('/api/telemetry', apiParams);
+  return fetchJson<EventsResponse>(url);
 }
 
 function buildUrl(path: string, params: Record<string, string>) {

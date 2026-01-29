@@ -96,8 +96,9 @@ telemetryRouter.get('/', requireAuth(storageService.pool), async (req: Request, 
       });
     }
 
-    const events = await storageService.queryEvents(parsed);
-    res.status(200).json({ events, total: events.length, count: events.length, filters: parsed });
+    const [events, total] = await Promise.all([storageService.queryEvents(parsed), storageService.countEvents(parsed)]);
+
+    res.status(200).json({ events, total, count: events.length, filters: parsed });
   } catch (error) {
     console.error('Error querying telemetry:', error);
     res.status(500).json({ error: 'Internal server error', message: 'Failed to query telemetry events' });

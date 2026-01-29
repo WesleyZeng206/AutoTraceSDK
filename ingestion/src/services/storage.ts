@@ -146,6 +146,41 @@ export class StorageService {
     return result.rows;
   }
 
+  async countEvents(filters: QueryFilters): Promise<number> {
+    const clauses: string[] = [];
+    const values: Array<string | number> = [];
+    let paramIndex = 1;
+
+    const addClause = (fragment: string, value: string | number) => {
+      clauses.push(`${fragment} $${paramIndex}`);
+      values.push(value);
+      paramIndex += 1;
+    };
+
+    if (filters.teamId) {
+      addClause('team_id =', filters.teamId);
+    }
+
+    if (filters.service) {
+      addClause('service_name =', filters.service);
+    }
+
+    if (filters.route) addClause('route =', filters.route);
+
+    if (filters.startTime) addClause('timestamp >=', filters.startTime.toISOString());
+
+    if (filters.endTime) addClause('timestamp <=', filters.endTime.toISOString());
+
+    let sql = 'SELECT COUNT(*)::int as total FROM requests_raw';
+    
+    if (clauses.length > 0) {
+      sql += ` WHERE ${clauses.join(' AND ')}`;
+    }
+
+    const result = await this.pool.query<{ total: number }>(sql, values);
+    return result.rows[0]?.total ?? 0;
+  }
+
   async computeHourlyAggregates(startTime: Date, endTime: Date): Promise<void> {
     const client = await this.pool.connect();
 

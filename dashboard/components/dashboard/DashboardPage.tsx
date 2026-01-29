@@ -305,9 +305,7 @@ export default function DashboardPage() {
                 </div>
                 {routesQuery.isLoading ? (
                   <div className="py-12 text-center text-zinc-500">Loading...</div>) : routesQuery.data ? (
-                  <EndpointTable data={routesQuery.data} /> ) : (
-                  <div className="py-12 text-center text-zinc-500">No data available</div>
-                )}
+                  <EndpointTable data={routesQuery.data} teamId={teamId} startTime={startTime} endTime={endTime} /> ) : (<div className="py-12 text-center text-zinc-500">No data available</div>)}
               </div>
             </div>
           </>
