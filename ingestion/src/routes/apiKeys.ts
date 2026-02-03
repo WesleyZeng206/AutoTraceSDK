@@ -7,6 +7,10 @@ export function createApiKeysRouter(pool: Pool): Router {
   const router = Router();
   const apiKeyService = new ApiKeyService(pool);
 
+  const noStore = function (res: Response) { 
+    res.setHeader('Cache-Control', 'no-store'); 
+  }
+
   router.use(requireAuth(pool));
   router.post('/', async (req: Request, res: Response) => {
     try {
@@ -39,6 +43,8 @@ export function createApiKeysRouter(pool: Pool): Router {
         environment || 'live'
       );
 
+      noStore(res);
+      
       res.status(201).json({
         message: 'API key created successfully',
         keyId,
@@ -72,6 +78,7 @@ export function createApiKeysRouter(pool: Pool): Router {
         teamId as string | undefined
       );
 
+      noStore(res);
       res.status(200).json({ apiKeys });
     } catch (error) {
       console.error('Get API keys error:', error);
@@ -86,6 +93,7 @@ export function createApiKeysRouter(pool: Pool): Router {
 
         const apiKeys = await apiKeyService.getTeamApiKeys(teamId);
 
+        noStore(res);
         res.status(200).json({ apiKeys });
       } catch (error) {
         console.error('Get team API keys error:', error);

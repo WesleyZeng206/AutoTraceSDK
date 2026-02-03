@@ -179,6 +179,7 @@ statsRouter.get('/', requireAuth(storageService.pool), async (req: Request, res:
 
     res.setHeader('X-Cache', 'MISS');
     res.status(200).json({ stats });
+    
   } catch (error) {
     console.error('Error fetching stats:', error);
     res.status(500).json({

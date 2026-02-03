@@ -17,15 +17,7 @@ import { createApiKeysRouter } from './routes/apiKeys';
 import healthRouter from './routes/health';
 import { storageService } from './services/storage';
 import { aggregatorService } from './services/aggregator';
-import {
-  authRateLimiter,
-  apiRateLimiter,
-  ipBlockingMiddleware,
-  requestSizeValidator,
-  maliciousPatternDetection,
-  securityHeaders,
-  securityLogger,
-} from './middleware/security';
+import { authRateLimiter, apiRateLimiter, ipBlockingMiddleware, requestSizeValidator, maliciousPatternDetection, securityHeaders, securityLogger,} from './middleware/security';
 
 dotenv.config();
 
@@ -55,13 +47,46 @@ const corsOptions = x.length > 0
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
       credentials: true,
       maxAge: 600,
-    }
-  : {
-      origin: true,
+    } : {
+      origin: false,
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-      credentials: true,
+      credentials: false,
       maxAge: 600,
     };
+
+const allowedOrigins = new Set(x);
+
+const csrfGuard: express.RequestHandler = (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  const cookies = typeof req.headers.cookie === 'string' && req.headers.cookie.includes('session_token=');
+  const auth = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
+
+  if (!cookies || auth){
+    return next();
+  } 
+  const h = (req.headers.origin || req.headers.referer) as string | undefined;
+
+  if (!h) {
+    return res.status(403).json({ error: 'Forbidden', message: 'Missing origin' });
+  }
+
+  try {
+    const origin = new URL(h).origin;
+    const hostOrigin = `${req.protocol}://${req.headers.host}`;
+    
+    const allowed = allowedOrigins.size > 0 ? allowedOrigins.has(origin) : origin === hostOrigin;
+
+    if (allowed) {
+      return next();
+    }
+  } catch {
+
+  }
+
+  return res.status(403).json({ error: 'Forbidden', message: 'Invalid origin' });
+};
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -88,6 +113,7 @@ app.use(ipBlockingMiddleware);
 app.use(maliciousPatternDetection);
 app.use(requestSizeValidator);
 app.use(cors(corsOptions));
+app.use(csrfGuard);
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
@@ -116,6 +142,15 @@ async function startServer() {
   if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
     console.error('FATAL: SESSION_SECRET must be set and at least 32 characters long');
     process.exit(1);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const aggEn = String(process.env.AGGREGATOR_ENABLED ?? 'true').toLowerCase() !== 'false';
+
+    if (aggEn && !process.env.API_KEY) {
+      console.error('FATAL: API_KEY must be set during production if AGGREGATOR_ENABLED is set to true');
+      process.exit(1);
+    }
   }
 
   try {
