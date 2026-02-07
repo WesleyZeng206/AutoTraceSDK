@@ -7,6 +7,7 @@ import { registrationRateLimiter } from '../middleware/security';
 export function createAuthRouter(pool: Pool): Router {
   const router = Router();
   const authService = new AuthService(pool);
+  const ns = (res: Response) => res.setHeader('Cache-Control', 'no-store');
 
 
   router.post('/register', registrationRateLimiter, async (req: Request, res: Response) => {
@@ -95,6 +96,7 @@ export function createAuthRouter(pool: Pool): Router {
         path: '/',
       });
 
+      ns(res);
       res.status(200).json({
         message: 'Login successful',
         user,
@@ -134,6 +136,8 @@ export function createAuthRouter(pool: Pool): Router {
 
   router.get('/me', requireAuth(pool), async (req: Request, res: Response) => {
     try {
+      ns(res);
+
       res.status(200).json({
         user: req.user,
         teams: req.teams,
@@ -147,6 +151,8 @@ export function createAuthRouter(pool: Pool): Router {
 
   router.post('/refresh', requireAuth(pool), async (req: Request, res: Response) => {
     try {
+      ns(res);
+      
       res.status(200).json({
         message: 'Session is active',
         user: req.user,
