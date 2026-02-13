@@ -4,6 +4,7 @@ import { useState, Suspense, FormEvent } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { loginSchema } from '@/lib/authValidation';
 
 function LoginContent() {
   const [email, setEmail] = useState('');
@@ -20,20 +21,17 @@ function LoginContent() {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Please enter both email and password.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+    const ok = loginSchema.safeParse({ emailOrUsername: email, password, rememberMe });
+    if (!ok.success) {
+      setError(ok.error.issues[0]?.message || 'Please check your credentials.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await login(email, password, rememberMe);
+      const clean = ok.data;
+      await login(clean.emailOrUsername, clean.password, clean.rememberMe);
       setIsLoading(false);
       router.refresh();
     } catch (err: any) {
@@ -117,13 +115,13 @@ function LoginContent() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-2">
-                Email
+                Email or username
               </label>
               <input
                 id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
+                type="text"
+                autoComplete="username"
+                placeholder="you@example.com or johndoe"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent bg-white"/>

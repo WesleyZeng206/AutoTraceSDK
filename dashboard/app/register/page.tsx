@@ -5,25 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { register as apiRegister } from '@/lib/auth';
-
-const registerSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
-  username: z
-    .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(30, 'Username must be at most 30 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string().min(8, 'Please confirm your password'),
-  teamName: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+import { registerSchema, type RegisterFormInput } from '@/lib/authValidation';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string>('');
@@ -31,7 +14,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const { register, handleSubmit, formState: { errors }, watch,
-  } = useForm<RegisterFormData>({
+  } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerSchema),
   });
 
@@ -52,11 +35,12 @@ export default function RegisterPage() {
   const strengthLabels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
   const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-400', 'bg-emerald-500'];
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormInput) => {
     try {
       setError('');
       setIsLoading(true);
-      await apiRegister(data.email, data.username, data.password, data.teamName);
+      const clean = registerSchema.parse(data);
+      await apiRegister(clean.email, clean.username, clean.password, clean.teamName);
       router.push('/login?registered=true');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');

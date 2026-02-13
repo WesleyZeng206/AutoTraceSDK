@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { AuthService } from '../services/auth';
 import { requireAuth } from '../middleware/auth';
-import { registrationRateLimiter } from '../middleware/security';
+import { authRateLimiter, registrationRateLimiter } from '../middleware/security';
+import { validateLoginInput, validateRegisterInput } from '../utils/authValidation';
 
 export function createAuthRouter(pool: Pool): Router {
   const router = Router();
@@ -12,53 +13,17 @@ export function createAuthRouter(pool: Pool): Router {
 
   router.post('/register', registrationRateLimiter, async (req: Request, res: Response) => {
     try {
-      const { email, username, password, teamName } = req.body;
-
-      // Validation
-      if (!email || !username || !password) {
-        return res.status(400).json({
-          error: 'Missing required fields: email, username, password',
-        });
+      const regCheck = validateRegisterInput(req.body);
+      
+      if (!regCheck.ok) {
+        return res.status(400).json({ error: regCheck.error });
       }
 
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: 'Invalid email format' });
-      }
-
-      // Username validation 
-      const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
-      if (!usernameRegex.test(username)) {
-        return res.status(400).json({
-          error: 'Invalid username: must be 3-30 characters, alphanumeric, underscore, or hyphen',
-        });
-      }
-
-      if (password.length < 8) {
-        return res.status(400).json({
-          error: 'Password must be at least 8 characters long',
-        });
-      }
-
-      const hasUpper = /[A-Z]/.test(password);
-      const hasLower = /[a-z]/.test(password);
-      const hasNum = /[0-9]/.test(password);
-      const hasSpec = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-      if (!hasUpper || !hasLower || !hasNum || !hasSpec) {
-        return res.status(400).json({
-          error: 'Password must contain uppercase, lowercase, number, and special character',
-        });
-      }
-
+      const { email, username, password, teamName } = regCheck.value;
       const { userId, teamId } = await authService.register(email, username, password, teamName);
 
-      res.status(201).json({
-        message: 'User registered successfully',
-        userId,
-        teamId,
-      });
+      res.status(201).json({ message: 'User registered successfully', userId, teamId });
+
     } catch (error: any) {
       console.error('Registration error:', error);
 
@@ -71,18 +36,15 @@ export function createAuthRouter(pool: Pool): Router {
   });
 
 
-  router.post('/login', async (req: Request, res: Response) => {
+  router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
     try {
-      const { email, password, rememberMe } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({
-          error: 'Missing required fields: email, password',
-        });
+      const loginCheck = validateLoginInput(req.body);
+      if (!loginCheck.ok) {
+        return res.status(400).json({ error: loginCheck.error });
       }
 
-
-      const { token, user } = await authService.login(email, password);
+      const { emailOrUsername, password, rememberMe } = loginCheck.value;
+      const { token, user } = await authService.login(emailOrUsername, password);
 
       const isProduction = process.env.NODE_ENV === 'production';
       // Set cookie expiration: 30 days if rememberMe is checked, otherwise 1 day
@@ -97,10 +59,7 @@ export function createAuthRouter(pool: Pool): Router {
       });
 
       ns(res);
-      res.status(200).json({
-        message: 'Login successful',
-        user,
-      });
+      res.status(200).json({ message: 'Login successful', user });
     } catch (error: any) {
       console.error('Login error:', error);
 
@@ -137,11 +96,7 @@ export function createAuthRouter(pool: Pool): Router {
   router.get('/me', requireAuth(pool), async (req: Request, res: Response) => {
     try {
       ns(res);
-
-      res.status(200).json({
-        user: req.user,
-        teams: req.teams,
-      });
+      res.status(200).json({ user: req.user, teams: req.teams });
     } catch (error) {
       console.error('Get current user error:', error);
       res.status(500).json({ error: 'Failed to get user info' });
@@ -152,12 +107,7 @@ export function createAuthRouter(pool: Pool): Router {
   router.post('/refresh', requireAuth(pool), async (req: Request, res: Response) => {
     try {
       ns(res);
-      
-      res.status(200).json({
-        message: 'Session is active',
-        user: req.user,
-        teams: req.teams,
-      });
+      res.status(200).json({ message: 'Session is active', user: req.user, teams: req.teams });
     } catch (error) {
       console.error('Refresh error:', error);
       res.status(500).json({ error: 'Session refresh failed' });
