@@ -22,6 +22,24 @@ services:
     restart: always
     user: postgres
 
+  redis:
+    image: redis:7-alpine
+    container_name: autotrace-redis-prod
+    env_file:
+      - .env.production
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD required}
+    volumes:
+      - redis_data_prod:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - autotrace-network-prod
+    restart: always
 
   ingestion:
     build:
@@ -56,6 +74,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - autotrace-network-prod
     restart: always
@@ -88,6 +108,8 @@ services:
 
 volumes:
   postgres_data_prod:
+    driver: local
+  redis_data_prod:
     driver: local
 
 networks:

@@ -210,7 +210,7 @@ export class AuthService {
         [user.id]
       );
 
-      await client.query('DELETE FROM sessions WHERE user_id = $1', [user.id]);
+      await client.query('DELETE FROM sessions WHERE user_id = $1 AND expires_at < NOW()', [user.id]);
 
       const token = this.generateSessionToken();
       const tokenHash = this.hashToken(token);

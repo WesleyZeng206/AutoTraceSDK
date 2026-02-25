@@ -34,3 +34,5 @@ env/
 /ingestion/test-cache.ts
 ENV/
 sample-test-app.js
+ignore.md
+test.md

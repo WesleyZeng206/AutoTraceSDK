@@ -63,9 +63,14 @@ const csrfGuard: express.RequestHandler = (req, res, next) => {
   const cookies = typeof req.headers.cookie === 'string' && req.headers.cookie.includes('session_token=');
   const auth = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
 
-  if (!cookies || auth){
+  if (!cookies) {
+    return next();
+  }
+
+  if (auth) {
     return next();
   } 
+  
   const h = (req.headers.origin || req.headers.referer) as string | undefined;
 
   if (!h) {
