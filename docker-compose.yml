@@ -10,7 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./ingestion/src/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U autotrace_user -d autotrace"]
       interval: 10s
@@ -72,6 +71,7 @@ services:
       REALTIME_ANOMALY_CRITICAL_THRESHOLD: 3.0
       REALTIME_ANOMALY_WARNING_THRESHOLD: 2.0
       REALTIME_ANOMALY_MIN_DATA_POINTS: 5
+    command: sh -c "node dist/migrate.js && node dist/index.js"
     depends_on:
       postgres:
         condition: service_healthy

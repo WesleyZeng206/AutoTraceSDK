@@ -8,7 +8,11 @@
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "watch": "tsc --watch",
-    "test": "jest"
+    "test": "jest",
+    "migrate": "node-pg-migrate -m src/db/migrations",
+    "migrate:up": "node-pg-migrate up -m src/db/migrations",
+    "migrate:down": "node-pg-migrate down -m src/db/migrations",
+    "migrate:create": "node-pg-migrate create -m src/db/migrations"
   },
   "keywords": [
     "telemetry",
@@ -20,6 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "node-pg-migrate": "^7.2.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",

@@ -15,6 +15,8 @@ import { createAuthRouter } from './routes/auth';
 import { createTeamsRouter } from './routes/teams';
 import { createApiKeysRouter } from './routes/apiKeys';
 import healthRouter from './routes/health';
+import { mlRouter } from './routes/v1/ml';
+import { requireAuth } from './middleware/auth';
 import { storageService } from './services/storage';
 import { aggregatorService } from './services/aggregator';
 import { authRateLimiter, apiRateLimiter, ipBlockingMiddleware, requestSizeValidator, maliciousPatternDetection, securityHeaders, securityLogger,} from './middleware/security';
@@ -34,9 +36,9 @@ const x = (process.env.ALLOWED_ORIGINS ?? '')
   .map(origin => origin.trim())
   .filter(Boolean);
 
-const isProd = process.env.NODE_ENV === 'production';
+const prod = process.env.NODE_ENV === 'production';
 
-if (isProd && x.length === 0) {
+if (prod && x.length === 0) {
   console.error('FATAL: ALLOWED_ORIGINS must be set in production');
   process.exit(1);
 }
@@ -54,9 +56,9 @@ const corsOptions = x.length > 0
       maxAge: 600,
     };
 
-const allowedOrigins = new Set(x);
+const origins = new Set(x);
 
-const csrfGuard: express.RequestHandler = (req, res, next) => {
+const csrfCheck: express.RequestHandler = (req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
@@ -81,7 +83,7 @@ const csrfGuard: express.RequestHandler = (req, res, next) => {
     const origin = new URL(h).origin;
     const hostOrigin = `${req.protocol}://${req.headers.host}`;
     
-    const allowed = allowedOrigins.size > 0 ? allowedOrigins.has(origin) : origin === hostOrigin;
+    const allowed = origins.size > 0 ? origins.has(origin) : origin === hostOrigin;
 
     if (allowed) {
       return next();
@@ -118,7 +120,7 @@ app.use(ipBlockingMiddleware);
 app.use(maliciousPatternDetection);
 app.use(requestSizeValidator);
 app.use(cors(corsOptions));
-app.use(csrfGuard);
+app.use(csrfCheck);
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
@@ -136,13 +138,14 @@ app.use('/stats', apiRateLimiter, statsRouter);
 app.use('/routes', apiRateLimiter, routesRouter);
 app.use('/distribution', apiRateLimiter, distributionRouter);
 app.use('/anomalies/realtime', apiRateLimiter, anomaliesRealtimeRouter);
+app.use('/v1/ml', apiRateLimiter, requireAuth(storageService.pool), mlRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error', message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 
-async function startServer() {
+async function init() {
 
   if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
     console.error('FATAL: SESSION_SECRET must be set and at least 32 characters long');
@@ -173,7 +176,7 @@ async function startServer() {
   return server;
 }
 
-const serverPromise = startServer();
+const p = init();
 let server: ReturnType<typeof app.listen>;
 
 const shutdown = async (signal: string) => {
@@ -181,7 +184,7 @@ const shutdown = async (signal: string) => {
 
   aggregatorService.stop();
 
-  const srv = await serverPromise;
+  const srv = await p;
   srv.close(async closeErr => {
     if (closeErr) {
       console.error('HTTP server failed to close cleanly', closeErr);
