@@ -11,30 +11,31 @@ const generateMetric = () => ({
 
 export function Hero() {
   const [metrics, setMetrics] = useState(generateMetric());
-  const [isLive, setIsLive] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMetrics(generateMetric());
-    }, 2000);
+      setMetrics(generateMetric());}, 2000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="relative min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
       <div
-        className="absolute inset-0 opacity-[0.02]"
+        className="absolute inset-0 opacity-[0.025]"
         style={{
           backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
-        }}/>
+          backgroundSize: '60px 60px',}}/>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 15% 50%, rgba(245,158,11,0.07) 0%, transparent 55%)',}}/>
 
       <nav className="relative z-20 border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center">
-                <span className="text-black font-bold text-sm">AT</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-amber-500 rounded-md flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm tracking-tight">AT</span>
               </div>
               <span className="text-lg font-semibold tracking-tight">AutoTrace</span>
             </div>
@@ -48,10 +49,14 @@ export function Hero() {
               <Link href="/docs" className="text-sm text-zinc-400 hover:text-white transition-colors">
                 Docs
               </Link>
-              <a href="https://github.com/WesleyZeng206/AutoTraceSDK" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-white transition-colors">
+              <a href="https://github.com/WesleyZeng206/AutoTraceSDK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-zinc-400 hover:text-white transition-colors">
                 GitHub
               </a>
-              <Link href="/login" className="text-sm px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-zinc-200 transition-colors">
+              <Link href="/login"
+                className="text-sm px-4 py-2 bg-amber-500 text-white rounded-md font-medium hover:bg-amber-400 transition-colors">
                 Sign In
               </Link>
             </div>
@@ -62,17 +67,17 @@ export function Hero() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-32">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 text-sm text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5">
+            <div className="inline-flex items-center gap-2 text-sm text-zinc-400 border border-white/10 bg-white/[0.03] rounded-full px-4 py-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
               </span>
-              Open Source Telemetry
+              Open Source · MIT License
             </div>
 
             <h1 className="text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
               Application observability,{' '}
-              <span className="text-zinc-500">simplified.</span>
+              <span className="text-amber-400">simplified.</span>
             </h1>
 
             <p className="text-lg text-zinc-400 leading-relaxed max-w-lg">
@@ -80,17 +85,20 @@ export function Hero() {
             </p>
 
             <div className="space-y-4">
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 font-mono text-sm">
-                <span className="text-zinc-500">$</span>{' '}
-                <span className="text-emerald-400">npm install</span>{' '}
-                <span className="text-white">autotracesdk</span>
+              <div className="bg-zinc-900/80 border border-white/10 rounded-lg p-4 font-mono text-sm flex items-center gap-3">
+                <span className="text-zinc-600 select-none">$</span>
+                <span className="text-amber-400">npm install</span>
+                <span className="text-zinc-300">autotracesdk</span>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Link href="/register" className="px-6 py-3 bg-white text-black rounded-md font-medium hover:bg-zinc-200 transition-colors">
+                <Link href="/register"
+                  className="px-6 py-3 bg-amber-500 text-white rounded-md font-medium hover:bg-amber-400 transition-colors">
                   Get Started Free
                 </Link>
-                <Link href="/docs" className="px-6 py-3 border border-zinc-700 text-white rounded-md font-medium hover:bg-zinc-900 transition-colors" >
+                <Link
+                  href="/docs"
+                  className="px-6 py-3 border border-zinc-700 text-zinc-300 rounded-md font-medium hover:bg-zinc-900 hover:text-white transition-colors">
                   Read the Docs
                 </Link>
               </div>
@@ -98,76 +106,74 @@ export function Hero() {
           </div>
 
           <div className="relative">
-            <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl overflow-hidden backdrop-blur-sm">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <div className="w-3 h-3 rounded-full bg-zinc-700" />
+            <div className="bg-zinc-900/90 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-black/20">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/70" />
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className={`flex items-center gap-1 ${isLive ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    Live
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                   </span>
+                  Live
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1">Requests/min</div>
-                    <div className="text-2xl font-semibold tabular-nums">{metrics.requests.toLocaleString()}</div>
+              <div className="p-6 space-y-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-black/30 border border-white/5 rounded-lg p-4">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1.5">Req/min</div>
+                    <div className="text-2xl font-bold tabular-nums font-mono">{metrics.requests.toLocaleString()}</div>
                   </div>
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1">Avg Latency</div>
-                    <div className="text-2xl font-semibold tabular-nums">{metrics.latency}ms</div>
+                  <div className="bg-black/30 border border-white/5 rounded-lg p-4">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1.5">Latency</div>
+                    <div className="text-2xl font-bold tabular-nums font-mono">{metrics.latency}<span className="text-sm text-zinc-500 font-normal">ms</span></div>
                   </div>
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1">Errors</div>
-                    <div className={`text-2xl font-semibold tabular-nums ${metrics.errors > 3 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <div className="bg-black/30 border border-white/5 rounded-lg p-4">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wide mb-1.5">Errors</div>
+                    <div className={`text-2xl font-bold tabular-nums font-mono ${metrics.errors > 3 ? 'text-red-400' : metrics.errors > 1 ? 'text-amber-400' : 'text-emerald-400'}`}>
                       {metrics.errors}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-zinc-800/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-zinc-500">Response Time (last 60s)</span>
-                  </div>
-                  <div className="flex items-end gap-1 h-16">
-                    {Array.from({ length: 30 }).map((_, i) => {
-                      const height = 20 + Math.random() * 80;
+                <div className="bg-black/20 border border-white/5 rounded-lg p-4">
+                  <div className="text-xs text-zinc-500 mb-3">Response time · last 60s</div>
+                  <div className="flex items-end gap-0.5 h-14">
+                    {Array.from({ length: 36 }).map((_, i) => {
+                      const height = 15 + Math.random() * 85;
+                      const isRecent = i >= 30;
                       return (
-                        <div key={i}
-                          className="flex-1 bg-zinc-700 rounded-sm transition-all duration-300"
+                        <div
+                          key={i}
+                          className="flex-1 rounded-sm transition-all duration-300"
                           style={{
                             height: `${height}%`,
-                            opacity: i > 24 ? 1 : 0.3 + (i / 30) * 0.7
-                          }}/>);
+                            backgroundColor: isRecent ? `rgba(245,158,11,${0.5 + (i - 30) * 0.1})` : 'rgba(255,255,255,0.07)',
+                          }}  />);
                     })}
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Active Services</div>
-                  {['api-gateway', 'auth-service', 'user-service'].map((service, i) => (
-                    <div key={service} className="flex items-center justify-between py-2 px-3 bg-zinc-800/30 rounded-lg">
-                      <span className="text-sm text-zinc-300">{service}</span>
+                  {['payment-api', 'auth-service', 'user-service'].map((service) => (
+                    <div key={service} className="flex items-center justify-between py-2 px-3 bg-black/20 border border-white/5 rounded-lg">
+                      <span className="text-sm text-zinc-300 font-mono">{service}</span>
                       <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         healthy
                       </span>
-                    </div>
-                  ))}
+                    </div>))}
                 </div>
               </div>
             </div>
 
-            <div className="absolute -inset-px bg-gradient-to-b from-zinc-700/20 to-transparent rounded-xl pointer-events-none" />
+            <div className="absolute -inset-px rounded-xl pointer-events-none"
+              style={{ boxShadow: '0 0 0 1px rgba(245,158,11,0.1)' }}/>
           </div>
         </div>
       </div>

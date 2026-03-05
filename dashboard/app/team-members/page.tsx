@@ -90,7 +90,7 @@ function TeamMembersContent() {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center">
+                <div className="w-7 h-7 bg-amber-500 rounded-md flex items-center justify-center">
                   <span className="text-white font-bold text-xs">AT</span>
                 </div>
                 <span className="text-base font-semibold text-zinc-900">AutoTrace</span>
@@ -102,7 +102,7 @@ function TeamMembersContent() {
                 <Link href="/api-keys" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
                   API Keys
                 </Link>
-                <Link href="/team-members" className="px-3 py-1.5 text-sm font-medium text-zinc-900 bg-zinc-100 rounded-md">
+                <Link href="/team-members" className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md">
                   Team
                 </Link>
                 <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
@@ -138,7 +138,7 @@ function TeamMembersContent() {
           <div className="mb-6">
             <button
               onClick={() => { setShowAddModal(true); setModalError(''); }}
-              className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+              className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-400 transition-colors"
             >
               Add Member
             </button>
@@ -156,7 +156,7 @@ function TeamMembersContent() {
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="email@example.com or username"
-                  className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 />
               </div>
               <div className="mb-4">
@@ -164,7 +164,7 @@ function TeamMembersContent() {
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value as 'admin' | 'member')}
-                  className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="member">Member</option>
                   <option value="admin">Admin</option>
@@ -179,7 +179,7 @@ function TeamMembersContent() {
                 <button
                   onClick={handleAddMember}
                   disabled={isAdding || !newMemberEmail.trim()}
-                  className="flex-1 px-4 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isAdding ? 'Adding...' : 'Add'}
                 </button>

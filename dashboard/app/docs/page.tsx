@@ -138,7 +138,7 @@ function DocsContent() {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center">
+                <div className="w-7 h-7 bg-amber-500 rounded-md flex items-center justify-center">
                   <span className="text-white font-bold text-xs">AT</span>
                 </div>
                 <span className="text-base font-semibold text-zinc-900">AutoTrace</span>
@@ -155,7 +155,7 @@ function DocsContent() {
                       Team
                     </Link>
                   </>
-                ) : null} <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-zinc-900 bg-zinc-100 rounded-md">
+                ) : null} <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md">
                   Docs
                 </Link>
               </div>
@@ -172,7 +172,7 @@ function DocsContent() {
                   <Link href="/login" className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors">
                     Sign in
                   </Link>
-                  <Link href="/register" className="px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-md transition-colors">
+                  <Link href="/register" className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 hover:bg-amber-400 rounded-md transition-colors">
                     Get Started
                   </Link>
                 </>
@@ -190,7 +190,7 @@ function DocsContent() {
                 <button
                   onClick={() => scrollToSection(section.id)}
                   className={`text-sm font-semibold mb-2 block w-full text-left ${
-                    activeSection === section.id ? 'text-zinc-900' : 'text-zinc-500 hover:text-zinc-700'
+                    activeSection === section.id ? 'text-amber-600' : 'text-zinc-500 hover:text-zinc-700'
                   }`}>
                   {section.label}
                 </button>
@@ -199,7 +199,7 @@ function DocsContent() {
                     <li key={sub.id}>
                       <button onClick={() => scrollToSection(sub.id)}
                         className={`text-[13px] pl-3 py-1 block w-full text-left transition-colors ${
-                          activeSection === sub.id ? 'text-zinc-900 border-l-2 border-zinc-900 -ml-px' : 'text-zinc-500 hover:text-zinc-700'}`}>
+                          activeSection === sub.id ? 'text-amber-600 border-l-2 border-amber-500 -ml-px' : 'text-zinc-500 hover:text-zinc-700'}`}>
                         {sub.label}
                       </button>
                     </li>
@@ -237,23 +237,23 @@ function DocsContent() {
             </p>
 
             <div className="grid grid-cols-3 gap-4 mb-12">
-              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
-                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-amber-200 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <h3 className="font-medium text-zinc-900 text-sm">Zero config</h3>
                 <p className="text-xs text-zinc-500 mt-1">Works out of the box with Express.js</p>
               </div>
-              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
-                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-amber-200 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                 </div>
                 <h3 className="font-medium text-zinc-900 text-sm">Real-time metrics</h3>
                 <p className="text-xs text-zinc-500 mt-1">Latency, errors, percentiles</p>
               </div>
-              <div className="p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center mb-3">
-                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <div className="p-4 rounded-lg border border-zinc-200 hover:border-amber-200 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
                 <h3 className="font-medium text-zinc-900 text-sm">Anomaly detection</h3>
                 <p className="text-xs text-zinc-500 mt-1">Automatic spike detection</p>
@@ -345,7 +345,7 @@ batchRetryOptions: {
             <h2 id="metrics" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">Metrics</h2>
             <div className="space-y-4 mb-8">
               <div className="flex gap-4 p-4 rounded-lg border border-zinc-200">
-                <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xs font-bold">#</span>
                 </div>
                 <div>
@@ -426,21 +426,21 @@ batchRetryOptions: {
             <h2 id="how-it-works" className="text-xl font-semibold text-zinc-900 mt-8 mb-4 scroll-mt-20">How It Works</h2>
             <ol className="space-y-4 mb-8">
               <li className="flex gap-4">
-                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
+                <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
                 <div>
                   <h4 className="font-medium text-zinc-900">Baseline Calculation</h4>
                   <p className="text-sm text-zinc-500">Analyzes 48 hours of metrics to establish normal patterns</p>
                 </div>
               </li>
               <li className="flex gap-4">
-                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
+                <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
                 <div>
                   <h4 className="font-medium text-zinc-900">Z-Score Calculation</h4>
                   <p className="text-sm text-zinc-500">Measures how far current metrics deviate from the baseline</p>
                 </div>
               </li>
               <li className="flex gap-4">
-                <span className="w-6 h-6 rounded-full bg-zinc-900 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
+                <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
                 <div>
                   <h4 className="font-medium text-zinc-900">Real-time Scoring</h4>
                   <p className="text-sm text-zinc-500">Detection runs on-demand when you query the dashboard</p>
@@ -480,9 +480,7 @@ batchRetryOptions: {
   persistInterval: 1000,
   autoFlushOnExit: true,
 }`}</CodeBlock>
-            <p className="text-sm text-zinc-500 mt-4">
-              Events are stored as JSONL files and replayed automatically when ingestion recovers.
-            </p>
+            <p className="text-sm text-zinc-500 mt-4"> Events are stored as JSONL files and replayed automatically when ingestion recovers. </p>
 
             <h2 id="production" className="text-xl font-semibold text-zinc-900 mt-12 mb-4 scroll-mt-20">Production Tips</h2>
             <ul className="space-y-3 text-sm text-zinc-600">
