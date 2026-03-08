@@ -19,6 +19,7 @@ import { mlRouter } from './routes/v1/ml';
 import { requireAuth } from './middleware/auth';
 import { storageService } from './services/storage';
 import { aggregatorService } from './services/aggregator';
+import { mlAggregatorService } from './jobs/mlAggregator';
 import { authRateLimiter, apiRateLimiter, ipBlockingMiddleware, requestSizeValidator, maliciousPatternDetection, securityHeaders, securityLogger,} from './middleware/security';
 
 dotenv.config();
@@ -138,7 +139,7 @@ app.use('/stats', apiRateLimiter, statsRouter);
 app.use('/routes', apiRateLimiter, routesRouter);
 app.use('/distribution', apiRateLimiter, distributionRouter);
 app.use('/anomalies/realtime', apiRateLimiter, anomaliesRealtimeRouter);
-app.use('/v1/ml', apiRateLimiter, requireAuth(storageService.pool), mlRouter);
+app.use('/v1/ml', apiRateLimiter, mlRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
@@ -171,6 +172,7 @@ async function init() {
   const server = app.listen(PORT, () => {
     console.log(`AutoTrace ingestion listening on ${PORT}`);
     aggregatorService.start();
+    mlAggregatorService.start();
   });
 
   return server;
@@ -183,6 +185,7 @@ const shutdown = async (signal: string) => {
   console.log(`${signal} received. Draining connections...`);
 
   aggregatorService.stop();
+  mlAggregatorService.stop();
 
   const srv = await p;
   srv.close(async closeErr => {

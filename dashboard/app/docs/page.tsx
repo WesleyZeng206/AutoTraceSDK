@@ -154,8 +154,7 @@ function DocsContent() {
                     <Link href="/team-members" className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
                       Team
                     </Link>
-                  </>
-                ) : null} <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md">
+                  </> ) : null} <Link href="/docs" className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md">
                   Docs
                 </Link>
               </div>
