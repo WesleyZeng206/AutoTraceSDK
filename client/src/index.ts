@@ -9,4 +9,7 @@ export type { TelemetryEvent, AutoTraceSDKConfig, PersistentQueueOptions, Extens
 
 export { PersistentQueue } from './persistence';
 
+export { AutotraceML, LlmSpan } from './ml';
+export type { AutotraceMLConfig, LlmSpanOptions, LlmFinishData } from './ml';
+
 

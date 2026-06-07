@@ -128,6 +128,10 @@ export default function DashboardPage() {
                   className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md">
                   Dashboard
                 </Link>
+                <Link href="/ml"
+                  className="px-3 py-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
+                  ML
+                </Link>
                 <Link href="/api-keys"
                   className="px-3 py-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors">
                   API Keys

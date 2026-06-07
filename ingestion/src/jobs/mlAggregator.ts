@@ -40,35 +40,35 @@ class MlAggregatorService {
     await pool.query(`
       INSERT INTO ml_llm_hourly
         (team_id, provider, model, time_bucket,
-         requests, errors, prompt_tokens, completion_tokens, total_tokens,
-         cost_usd, avg_duration_ms, p95_duration_ms, p99_duration_ms)
+         call_count, error_count, prompt_tokens, completion_tokens, total_tokens,
+         total_cost_usd, avg_latency_ms, p95_latency_ms, p99_latency_ms)
       SELECT
         team_id,
         provider,
         model,
         DATE_TRUNC('hour', started_at)         AS time_bucket,
-        COUNT(*)                               AS requests,
-        COUNT(*) FILTER (WHERE status != 'success') AS errors,
+        COUNT(*)                               AS call_count,
+        COUNT(*) FILTER (WHERE status != 'success') AS error_count,
         COALESCE(SUM(prompt_tokens), 0)        AS prompt_tokens,
         COALESCE(SUM(completion_tokens), 0)    AS completion_tokens,
         COALESCE(SUM(total_tokens), 0)         AS total_tokens,
-        COALESCE(SUM(cost_usd), 0)            AS cost_usd,
-        AVG(duration_ms)                       AS avg_duration_ms,
-        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) AS p95_duration_ms,
-        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms) AS p99_duration_ms
+        COALESCE(SUM(estimated_cost_usd), 0)   AS total_cost_usd,
+        AVG(latency_ms)                        AS avg_latency_ms,
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95_latency_ms,
+        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) AS p99_latency_ms
       FROM ml_llm_events
       WHERE created_at >= NOW() - INTERVAL '3 hours'
       GROUP BY team_id, provider, model, DATE_TRUNC('hour', started_at)
       ON CONFLICT (team_id, provider, model, time_bucket) DO UPDATE SET
-        requests          = EXCLUDED.requests,
-        errors            = EXCLUDED.errors,
+        call_count        = EXCLUDED.call_count,
+        error_count       = EXCLUDED.error_count,
         prompt_tokens     = EXCLUDED.prompt_tokens,
         completion_tokens = EXCLUDED.completion_tokens,
         total_tokens      = EXCLUDED.total_tokens,
-        cost_usd          = EXCLUDED.cost_usd,
-        avg_duration_ms   = EXCLUDED.avg_duration_ms,
-        p95_duration_ms   = EXCLUDED.p95_duration_ms,
-        p99_duration_ms   = EXCLUDED.p99_duration_ms,
+        total_cost_usd    = EXCLUDED.total_cost_usd,
+        avg_latency_ms    = EXCLUDED.avg_latency_ms,
+        p95_latency_ms    = EXCLUDED.p95_latency_ms,
+        p99_latency_ms    = EXCLUDED.p99_latency_ms,
         updated_at        = NOW() `);
   }
 
