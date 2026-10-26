@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import type { TelemetryEvent } from '@autotrace/telemetry';
+import { config } from '../config';
 
 interface QueryFilters {
   service?: string;
@@ -16,13 +17,8 @@ export class StorageService {
   private connectionVerified: boolean = false;
 
   constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error('DATABASE_URL not configured. Set the environment variable before starting the ingestion service.');
-    }
-
     this.pool = new Pool({
-      connectionString,
+      connectionString: config.databaseUrl,
       max: 20,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 2_000

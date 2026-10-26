@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { storageService } from '../services/storage';
 import { RealtimeAnomalyDetector } from '../services/realtimeAnomalyDetector';
-import { anomalyConfig } from '../config/anomalyConfig';
+import { config } from '../config';
 import { cacheService } from '../services/cache';
 import { CacheKeys } from '../utils/cacheKeys';
 import { normalizeWindow } from '../utils/timeWindow';
@@ -40,12 +40,12 @@ anomaliesRealtimeRouter.get('/', requireAuth(storageService.pool), async (req: R
 
     const windowHours = windowHoursRaw
       ? parseInt(windowHoursRaw as string, 10)
-      : anomalyConfig.defaultWindowHours;
+      : config.anomaly.defaultWindowHours;
 
-    if (Number.isNaN(windowHours) || windowHours < 1 || windowHours > anomalyConfig.maxWindowHours) {
+    if (Number.isNaN(windowHours) || windowHours < 1 || windowHours > config.anomaly.maxWindowHours) {
       return res.status(400).json({
         error: 'Invalid query parameter',
-        message: `windowHours must be a number between 1 and ${anomalyConfig.maxWindowHours}`,
+        message: `windowHours must be a number between 1 and ${config.anomaly.maxWindowHours}`,
       });
     }
 
@@ -85,7 +85,7 @@ anomaliesRealtimeRouter.get('/', requireAuth(storageService.pool), async (req: R
 
     const minRequests = minRequestsRaw
       ? parseInt(minRequestsRaw as string, 10)
-      : anomalyConfig.minRequests;
+      : config.anomaly.minRequests;
 
     if (Number.isNaN(minRequests) || minRequests < 1) {
       return res.status(400).json({
@@ -138,11 +138,11 @@ anomaliesRealtimeRouter.get('/', requireAuth(storageService.pool), async (req: R
       endTime,
       windowHours,
       minRequests,
-      minDataPoints: anomalyConfig.minDataPoints,
+      minDataPoints: config.anomaly.minDataPoints,
       severity: severity as 'info' | 'warning' | 'critical' | undefined,
     });
 
-    const ttl = parseInt(process.env.REDIS_TTL_ANOMALIES || '60', 10);
+    const ttl = config.cache.ttlSeconds.anomalies;
     await cacheService.set(cacheKey, anomalies, ttl);
 
     const limitedAnomalies = anomalies.slice(0, limit);

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { storageService } from '../services/storage';
 import { cacheService } from '../services/cache';
+import { config } from '../config';
 import { CacheKeys } from '../utils/cacheKeys';
 import { normalizeWindow } from '../utils/timeWindow';
 
@@ -133,7 +134,7 @@ distributionRouter.get('/', requireAuth(storageService.pool), async (req: Reques
       { range: '1s+', count: parseInt(row.range_1000_plus || '0', 10) },
     ];
 
-    const ttl = parseInt(process.env.REDIS_TTL_DISTRIBUTION || '60', 10);
+    const ttl = config.cache.ttlSeconds.distribution;
     await cacheService.set(cacheKey, distribution, ttl);
 
     res.setHeader('X-Cache', 'MISS');

@@ -1,9 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { Pool } from 'pg';
-
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
-const SESSION_DURATION_DAYS = parseInt(process.env.SESSION_DURATION_DAYS || '7', 10);
+import { config } from '../config';
 
 interface User {
   id: string;
@@ -62,7 +60,7 @@ export class AuthService {
    * Hash a password using bcrypt
    */
   async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, BCRYPT_ROUNDS);
+    return bcrypt.hash(password, config.security.bcryptRounds);
   }
 
   async verifyPassword(password: string, hash: string): Promise<boolean> {
@@ -215,7 +213,7 @@ export class AuthService {
       const token = this.generateSessionToken();
       const tokenHash = this.hashToken(token);
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+      expiresAt.setDate(expiresAt.getDate() + config.security.sessionDurationDays);
 
       await client.query(
         `INSERT INTO sessions (user_id, token_hash, expires_at)

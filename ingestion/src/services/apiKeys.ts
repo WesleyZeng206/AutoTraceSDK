@@ -1,8 +1,7 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
+import { config } from '../config';
 
 interface ApiKey {
   id: string;
@@ -44,7 +43,7 @@ export class ApiKeyService {
    * Hash API key for storage
    */
   async hashKey(key: string): Promise<string> {
-    return bcrypt.hash(key, BCRYPT_ROUNDS);
+    return bcrypt.hash(key, config.security.bcryptRounds);
   }
 
   /**

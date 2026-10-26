@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { storageService } from '../services/storage';
 import { cacheService } from '../services/cache';
+import { config } from '../config';
 import { CacheKeys } from '../utils/cacheKeys';
 
 export const servicesRouter = Router();
@@ -40,7 +41,7 @@ servicesRouter.get('/', requireAuth(storageService.pool), async (req: Request, r
 
     const services = result.rows.map((row) => row.service_name);
 
-    const ttl = parseInt(process.env.REDIS_TTL_SERVICES || '120', 10);
+    const ttl = config.cache.ttlSeconds.services;
     await cacheService.set(cacheKey, services, ttl);
 
     res.setHeader('X-Cache', 'MISS');

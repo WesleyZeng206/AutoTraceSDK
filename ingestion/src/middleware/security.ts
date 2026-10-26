@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import { config } from '../config';
 
 
 const blockedIPs = new Set<string>();
@@ -121,7 +122,7 @@ export const registrationRateLimiter: RateLimitRequestHandler = rateLimit({
 
 export const apiRateLimiter: RateLimitRequestHandler = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: Number(process.env.RATE_LIMIT_REQUESTS) || 100,
+  max: config.rateLimit.apiPerMinute,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -141,7 +142,7 @@ export const apiRateLimiter: RateLimitRequestHandler = rateLimit({
 
 export const telemetryRateLimiter: RateLimitRequestHandler = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: Number(process.env.TELEMETRY_RATE_LIMIT) || 500,
+  max: config.rateLimit.telemetryPerMinute,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { AuthService } from '../services/auth';
 import { requireAuth } from '../middleware/auth';
 import { authRateLimiter, registrationRateLimiter } from '../middleware/security';
+import { config } from '../config';
 import { validateLoginInput, validateRegisterInput } from '../utils/authValidation';
 
 export function createAuthRouter(pool: Pool): Router {
@@ -46,7 +47,7 @@ export function createAuthRouter(pool: Pool): Router {
       const { emailOrUsername, password, rememberMe } = loginCheck.value;
       const { token, user } = await authService.login(emailOrUsername, password);
 
-      const isProduction = process.env.NODE_ENV === 'production';
+      const isProduction = config.server.isProduction;
       // Set cookie expiration: 30 days if rememberMe is checked, otherwise 1 day
       const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 

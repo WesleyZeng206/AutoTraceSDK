@@ -1,5 +1,4 @@
 import cors from 'cors';
-import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -20,33 +19,31 @@ import { requireAuth } from './middleware/auth';
 import { storageService } from './services/storage';
 import { aggregatorService } from './services/aggregator';
 import { mlAggregatorService } from './jobs/mlAggregator';
+import { config, ConfigError } from './config';
 import { authRateLimiter, apiRateLimiter, ipBlockingMiddleware, requestSizeValidator, maliciousPatternDetection, securityHeaders, securityLogger,} from './middleware/security';
 
-dotenv.config();
-
-const PORT = Number(process.env.PORT) || 4000;
+const serverConfig = config.server;
 const app = express();
 
-if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+if (serverConfig.trustProxy) {
   app.set('trust proxy', 1);
   console.log('Trust proxy enabled - using X-Forwarded-For for IP detection');
+} else {
+  console.log('Trust proxy disabled - using socket address for IP detection');
 }
 
-const x = (process.env.ALLOWED_ORIGINS ?? '')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
+const allowedOrigins = serverConfig.allowedOrigins;
 
-const prod = process.env.NODE_ENV === 'production';
-
-if (prod && x.length === 0) {
+if (serverConfig.isProduction && allowedOrigins.length === 0) {
   console.error('FATAL: ALLOWED_ORIGINS must be set in production');
   process.exit(1);
+} else {
+  console.log(`CORS allowed origins: ${allowedOrigins.length}`);
 }
 
-const corsOptions = x.length > 0
+const corsOptions = allowedOrigins.length > 0
   ? {
-      origin: x,
+      origin: allowedOrigins,
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
       credentials: true,
       maxAge: 600,
@@ -57,7 +54,7 @@ const corsOptions = x.length > 0
       maxAge: 600,
     };
 
-const origins = new Set(x);
+const origins = new Set(allowedOrigins);
 
 const csrfCheck: express.RequestHandler = (req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -143,24 +140,39 @@ app.use('/v1/ml', apiRateLimiter, mlRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error', message: process.env.NODE_ENV === 'development' ? err.message : undefined });
+  res.status(500).json({ error: 'Internal server error', message: serverConfig.isDevelopment ? err.message : undefined });
 });
 
-async function init() {
+function checkStartupConfig(): string | null {
+  try {
+    config.validate();
+  } catch (error) {
+    if (error instanceof ConfigError) return error.message;
+    throw error;
+  }
 
-  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
-    console.error('FATAL: SESSION_SECRET must be set and at least 32 characters long');
+  const sessionSecret = config.security.sessionSecret;
+
+  if (!sessionSecret || sessionSecret.length < 32) {
+    return 'SESSION_SECRET must be set and at least 32 characters long';
+  }
+
+  if (serverConfig.isProduction && config.aggregator.enabled && !config.security.adminApiKey) {
+    return 'API_KEY must be set during production if AGGREGATOR_ENABLED is set to true';
+  }
+
+  return null;
+}
+
+async function init() {
+  const configError = checkStartupConfig();
+
+  if (configError) {
+    console.error(`FATAL: ${configError}`);
     process.exit(1);
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    const aggEn = String(process.env.AGGREGATOR_ENABLED ?? 'true').toLowerCase() !== 'false';
-
-    if (aggEn && !process.env.API_KEY) {
-      console.error('FATAL: API_KEY must be set during production if AGGREGATOR_ENABLED is set to true');
-      process.exit(1);
-    }
-  }
+  console.log('Configuration validated');
 
   try {
     await storageService.initialize();
@@ -169,8 +181,8 @@ async function init() {
     process.exit(1);
   }
 
-  const server = app.listen(PORT, () => {
-    console.log(`AutoTrace ingestion listening on ${PORT}`);
+  const server = app.listen(serverConfig.port, () => {
+    console.log(`AutoTrace ingestion listening on ${serverConfig.port}`);
     aggregatorService.start();
     mlAggregatorService.start();
   });

@@ -1,5 +1,6 @@
 import { storageService } from './storage';
 import { cacheService } from './cache';
+import { config } from '../config';
 
 type Cfg = { enabled: boolean; interval: number; runOnStartup: boolean };
 const MAX_WINDOWS = 24 * 31;
@@ -16,12 +17,13 @@ export class AggregatorService {
   private busy = false;
   private last: Date | null = null;
 
-  constructor(cfg?: Partial<Cfg>) {
-    const rawInterval = cfg?.interval ?? parseInterval(process.env.AGGREGATOR_INTERVAL ?? '1h');
+  constructor(overrides: Partial<Cfg> = {}) {
+    const defaults = config.aggregator;
+
     this.cfg = {
-      enabled: cfg?.enabled ?? process.env.AGGREGATOR_ENABLED !== 'false',
-      interval: rawInterval,
-      runOnStartup: cfg?.runOnStartup ?? process.env.AGGREGATOR_RUN_ON_STARTUP === 'true'
+      enabled: overrides.enabled ?? defaults.enabled,
+      interval: overrides.interval ?? defaults.intervalMs,
+      runOnStartup: overrides.runOnStartup ?? defaults.runOnStartup,
     };
   }
 
@@ -134,23 +136,6 @@ export class AggregatorService {
     const x = new Date(d);
     x.setMinutes(0, 0, 0);
     return x;
-  }
-}
-
-function parseInterval(s: string): number {
-  const match = s.match(/^(\d+)(ms|s|m|h|d)$/);
-  if (!match) throw new Error('Invalid interval format: ' + s);
-
-  const [, num, unit] = match;
-  const n = parseInt(num, 10);
-
-  switch (unit) {
-    case 'ms': return n;
-    case 's': return n * 1000;
-    case 'm': return n * 60 * 1000;
-    case 'h': return n * 60 * 60 * 1000;
-    case 'd': return n * 24 * 60 * 60 * 1000;
-    default: throw new Error('Unknown unit: ' + unit);
   }
 }
 

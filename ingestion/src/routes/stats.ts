@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { storageService } from '../services/storage';
 import { cacheService } from '../services/cache';
+import { config } from '../config';
 import { CacheKeys } from '../utils/cacheKeys';
 import { normalizeWindow } from '../utils/timeWindow';
 
@@ -174,7 +175,7 @@ statsRouter.get('/', requireAuth(storageService.pool), async (req: Request, res:
       p99Latency: Math.round(parseFloat(row.p99_latency || '0') * 100) / 100,
     };
 
-    const ttl = parseInt(process.env.REDIS_TTL_STATS || '60', 10);
+    const ttl = config.cache.ttlSeconds.stats;
     await cacheService.set(cacheKey, stats, ttl);
 
     res.setHeader('X-Cache', 'MISS');

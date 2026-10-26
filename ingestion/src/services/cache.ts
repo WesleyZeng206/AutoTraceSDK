@@ -1,30 +1,31 @@
 import Redis from 'ioredis';
 import type { Redis as RedisClient } from 'ioredis';
+import { config } from '../config';
 
 export class CacheService {
   private client?: RedisClient;
   private enabled: boolean;
-  private ownsClient: boolean;
+  private ownsClient = false;
   private stats = { hits: 0, misses: 0, errors: 0 };
 
   constructor(client?: RedisClient, enabled?: boolean) {
-    this.ownsClient = false;
     if (client) {
       this.client = client;
       this.enabled = enabled ?? true;
       return;
     }
 
-    this.enabled = enabled ?? process.env.REDIS_ENABLED === 'true';
-    if (this.enabled) {
-      this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-        retryStrategy: times => Math.min(times * 50, 2000),
-        maxRetriesPerRequest: 3,
-      });
-      this.ownsClient = true;
-      this.client.on('connect', () => console.log('Redis connected'));
-      this.client.on('error', err => console.error('Redis error:', err));
-    }
+    const cacheConfig = config.cache;
+    this.enabled = enabled ?? cacheConfig.enabled;
+    if (!this.enabled) return;
+
+    this.client = new Redis(cacheConfig.url, {
+      retryStrategy: times => Math.min(times * 50, 2000),
+      maxRetriesPerRequest: 3,
+    });
+    this.ownsClient = true;
+    this.client.on('connect', () => console.log('Redis connected'));
+    this.client.on('error', err => console.error('Redis error:', err));
   }
 
   async get<T>(key: string): Promise<T | null> {

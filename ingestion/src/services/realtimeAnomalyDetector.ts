@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { anomalyConfig } from '../config/anomalyConfig';
+import { config } from '../config';
 
 /**
  * Anomaly severity levels
@@ -205,9 +205,11 @@ export class RealtimeAnomalyDetector {
   }
 
   private classifySeverity(zScore: number): SeverityLevel {
-    if (zScore >= anomalyConfig.criticalThreshold) {
+    const { criticalThreshold, warningThreshold } = config.anomaly;
+
+    if (zScore >= criticalThreshold) {
       return 'critical';
-    } else if (zScore >= anomalyConfig.warningThreshold) {
+    } else if (zScore >= warningThreshold) {
       return 'warning';
     } else {
       return 'info';

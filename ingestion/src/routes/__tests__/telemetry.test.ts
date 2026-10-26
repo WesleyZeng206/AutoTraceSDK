@@ -2,12 +2,14 @@ import express from 'express';
 import request from 'supertest';
 
 const queryEventsMock = jest.fn().mockResolvedValue([]);
+const countEventsMock = jest.fn().mockResolvedValue(0);
 const insertBatchMock = jest.fn();
 
 const storageServiceMock = {
   insertBatch: insertBatchMock,
   insertEvent: jest.fn(),
   queryEvents: queryEventsMock,
+  countEvents: countEventsMock,
   close: jest.fn(),
   healthCheck: jest.fn()
 };
@@ -37,6 +39,8 @@ describe('GET /telemetry validation', () => {
   beforeEach(() => {
     queryEventsMock.mockReset();
     queryEventsMock.mockResolvedValue([]);
+    countEventsMock.mockReset();
+    countEventsMock.mockResolvedValue(0);
     insertBatchMock.mockReset();
   });
 
